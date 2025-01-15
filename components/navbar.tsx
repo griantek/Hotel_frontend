@@ -51,7 +51,7 @@ export const Navbar = () => {
               height={36}
               style={{ filter: "grayscale(100%)" }}
             />
-            <p className="text-inherit">THE COIFFEUR</p>
+            <p className="text-inherit">Xcel</p>
           </NextLink>
         </NavbarBrand>
       </NavbarContent>
