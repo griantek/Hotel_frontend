@@ -10,7 +10,7 @@ export default function WelcomePage() {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://img.freepik.com/free-photo/blurred-illuminated-wooden-hall_1203-1265.jpg')`,
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://img.freepik.com/free-photo/sunset-coming-through-windows-hotel_181624-292.jpg?t=st=1737053355~exp=1737056955~hmac=0a50bbb36d13d686f150dc223afb5054a0dbf18d44cdeb1711b5297a6f3d206f&w=1480')`,
       }}
     >
       <div className="max-w-6xl mx-auto p-6">
