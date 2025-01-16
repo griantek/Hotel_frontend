@@ -55,7 +55,31 @@ interface RoomAvailability {
 export default function ModifyBooking() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bookingId = searchParams.get('id');
+  const token = searchParams.get('token');
+
+  // Add validation effect
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        router.push("/tokenexp"); // Redirect if no token
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
+          params: { token }
+        });
+        
+        // After token validation, fetch booking using the ID from token data
+        const bookingId = response.data.id;
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        router.push("/tokenexp"); // Redirect on invalid token
+      }
+    };
+
+    validateToken();
+  }, [token, router]);
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
