@@ -56,6 +56,7 @@ export default function ModifyBooking() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   // Add validation effect
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function ModifyBooking() {
         });
         
         // After token validation, fetch booking using the ID from token data
-        const bookingId = response.data.id;
+        setBookingId(response.data.id);
       } catch (error) {
         console.error('Token validation failed:', error);
         router.push("/tokenexp"); // Redirect on invalid token
