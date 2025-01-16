@@ -32,12 +32,11 @@ export default function BookingPage() {
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [availability, setAvailability] = useState<Availability | null>(null);
   const searchParams = useSearchParams();
-  const phone = searchParams.get('phone');
-  const name = searchParams.get('name');
+  const token = searchParams.get('token');
 
   const [formData, setFormData] = useState<FormData>({
-    name: name ||'',
-    phone: phone || '',
+    name: '',
+    phone: '',
     roomType: '',
     checkInDate: '',
     checkInTime: '14:00',
@@ -46,6 +45,35 @@ export default function BookingPage() {
     guestCount: 1,
     notes: ''
   });
+
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        router.push("/tokenexp");; // Redirect to home if no token
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
+          params: { token }
+        });
+        
+        // Update form with validated user data
+        setFormData(prev => ({
+          ...prev,
+          name: response.data.name,
+          phone: response.data.phone
+        }));
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        router.push("/tokenexp"); // Redirect to home on invalid token
+      }
+    };
+
+    validateToken();
+  }, [token, router]);
   
   const roomTypes = [
     { label: "Single Room", value: "Single Room" },
