@@ -16,6 +16,24 @@ export const siteConfig = {
       href: "/offers",
     },
   ],
+  adminNavItems: [
+    {
+      label: "Dashboard",
+      href: "/admin/dashboard",
+    },
+    {
+      label: "Bookings",
+      href: "/admin/bookings",
+    },
+    {
+      label: "Rooms",
+      href: "/admin/rooms",
+    },
+    {
+      label: "Users",
+      href: "/admin/users",
+    },
+  ],
   links: {
     github: "https://github.com/nextui-org/nextui",
     twitter: "https://twitter.com/getnextui",

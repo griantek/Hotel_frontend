@@ -1,115 +1,72 @@
-"use client"
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-import { 
-  Input, 
-  Button, 
-  Card, 
-  CardBody 
-} from "@nextui-org/react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { button as buttonStyles } from "@nextui-org/theme";
+'use client';
 
-import { API_URLS, DEFAULT_VALUES } from "@/utils/constants";
+import { Button, Card, CardBody } from "@nextui-org/react";
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
-  const [phone, setPhone] = useState("");
-  const [error, setError] = useState(""); 
+export default function WelcomePage() {
   const router = useRouter();
 
-  const checkPhone = async () => {
-    if (!phone) {
-      setError("Phone number is required.");
-      return;
-    }
-    if (!/^\d{10}$/.test(phone)) {
-      setError("Please enter a valid 10-digit phone number");
-      return;
-    }
-    setError(""); // Clear any existing error
- 
-    const formattedPhone = `91${phone}`; // Add +91 prefix
-    try {
-      const response = await axios.get(`${API_URLS.BACKEND_URL}/check-phone/${formattedPhone}`);
-      if (response.data.exists) {
-        // Phone number exists, navigate to Modify page and pass the formatted phone number
-        toast.success("Phone number found! Redirecting to Modify page...", {
-          position: "top-center",
-          autoClose: 2000,
-        });
-        setTimeout(() => {
-          router.push(`/modify?phone=${formattedPhone}`);
-        }, 2000);
-      } else {
-        // Phone number does not exist, navigate to Register page and pass the formatted phone number
-        toast.info("Phone number not found! Redirecting to Register page...", {
-          position: "top-center",
-          autoClose: 2000,
-        });
-        setTimeout(() => {
-          router.push(`/register?phone=${formattedPhone}`);
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error checking phone:", error);
-      toast.error("An error occurred while checking the phone number.", {
-        position: "top-center",
-      });
-    }
-  };
- 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow only numeric values
-    if (/^\d*$/.test(value)) {
-      setPhone(value);
-      setError(""); // Clear error when user starts typing
-    }
-  };
-
   return (
-    <div className="h-fit flex items-center justify-center p-4">
-      <Card className=" w-full max-w-md">
-        <CardBody className="flex items-center justify-center space-y-6 text-center">
-          {/* <Image 
-            src={DEFAULT_VALUES.IMAGE_URL} 
-            alt="Spa" 
-            className="mx-auto mb-4  object-cover rounded-lg"
-          /> */}
-          
-          <h1 className="text-2xl font-bold mb-4">
-            Welcome to the Spa Booking System
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Hero Section */}
+        <div className="text-center py-16 md:py-24">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-foreground">
+            Welcome to Luxury Hotel
           </h1>
-          
-          <Input
-            type="tel"
-            label="Phone Number"
-            value={phone}
-            onChange={handleInputChange}
-            maxLength={10}
-            isInvalid={!!error}
-            errorMessage={error}
-            fullWidth
-          />
-          
+          <p className="text-xl mb-8 text-foreground-500">
+            Experience comfort and luxury at its finest
+          </p>
           <Button 
             color="primary" 
-            onPress={checkPhone} 
-            className={buttonStyles({
-              color: "primary",
-              radius: "full",
-              variant: "shadow",
-            })}
-            fullWidth
+            size="lg"
+            onPress={() => router.push('/admin/login')}
+            className="font-semibold"
           >
-            Check
+            Admin Login
           </Button>
-        </CardBody>
-      </Card>
+        </div>
 
-      <ToastContainer />
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-12">
+          <Card className="bg-content1">
+            <CardBody className="text-center p-6">
+              <h3 className="text-xl font-bold mb-3 text-foreground">Luxurious Rooms</h3>
+              <p className="text-foreground-500">
+                Elegantly furnished rooms with modern amenities
+              </p>
+            </CardBody>
+          </Card>
+
+          <Card className="bg-content1">
+            <CardBody className="text-center p-6">
+              <h3 className="text-xl font-bold mb-3 text-foreground">Fine Dining</h3>
+              <p className="text-foreground-500">
+                Experience world-class cuisine at our restaurants
+              </p>
+            </CardBody>
+          </Card>
+
+          <Card className="bg-content1">
+            <CardBody className="text-center p-6">
+              <h3 className="text-xl font-bold mb-3 text-foreground">Premium Service</h3>
+              <p className="text-foreground-500">
+                24/7 concierge and personalized attention
+              </p>
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Contact Section */}
+        <Card className="mt-12 bg-content1">
+          <CardBody className="text-center p-8">
+            <h2 className="text-2xl font-bold mb-4 text-foreground">Contact Us</h2>
+            <p className="text-foreground-500 mb-2">123 Luxury Avenue, City</p>
+            <p className="text-foreground-500 mb-2">Phone: +1 234 567 8900</p>
+            <p className="text-foreground-500">Email: info@luxuryhotel.com</p>
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }
