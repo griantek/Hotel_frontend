@@ -49,7 +49,7 @@ export default function BookingPage() {
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        router.push("/tokenexp");; // Redirect to home if no token
+        router.push("/tokenexp"); // Redirect to home if no token
         return;
       }
 
