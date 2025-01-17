@@ -278,27 +278,26 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
           )}
 
 
-          {isApproachingCheckIn && (
-            <div className="mt-4">
-              <Button
-                color="warning"
-                onPress={handleSendReminder}
-              >
-                Send Check-in Reminder
-              </Button>
+          {(isApproachingCheckIn || (isCheckoutDay && !booking.checkout_reminder_sent)) && (
+            <div className="mt-4 flex gap-2">
+              {isApproachingCheckIn && (
+                <Button
+                  color="warning"
+                  onPress={handleSendReminder}
+                >
+                  Send Check-in Reminder
+                </Button>
+              )}
+              {isCheckoutDay && !booking.checkout_reminder_sent && (
+                <Button
+                  color="warning"
+                  onPress={handleSendCheckoutReminder}
+                >
+                  Send Checkout Reminder
+                </Button>
+              )}
             </div>
           )}
-
-        {isCheckoutDay && !booking.checkout_reminder_sent && (
-                <div className="mt-4">
-                <Button
-                    color="warning"
-                    onPress={handleSendCheckoutReminder}
-                >
-                    Send Checkout Reminder
-                </Button>
-                </div>
-            )}
 
           {booking.notes && (
             <>
