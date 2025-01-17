@@ -48,6 +48,7 @@ interface Booking {
     status: string;
     paid_status: string;
     notes?: string;
+    checkin_status: 'not yet' | 'checked in' | 'checked out'; // Add this line
   }
   
 
@@ -174,7 +175,7 @@ const filteredBookings = bookings.filter(booking => {
   
     return matchesSearch && matchesStatus && matchesDate;
   });
-  
+
   const totalRevenue = filteredBookings
     .filter(b => b.status === 'confirmed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
@@ -250,6 +251,7 @@ const filteredBookings = bookings.filter(booking => {
               <TableColumn>DATES</TableColumn>
               <TableColumn>PRICE</TableColumn>
               <TableColumn>STATUS</TableColumn>
+              <TableColumn>CHECKIN STATUS</TableColumn>
               <TableColumn>ACTIONS</TableColumn>
             </TableHeader>
             <TableBody>
@@ -281,6 +283,20 @@ const filteredBookings = bookings.filter(booking => {
                       size="sm"
                     >
                       {booking.status.toUpperCase()}
+                    </Chip>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                        color={
+                        booking.checkin_status === 'checked in' 
+                            ? 'success' 
+                            : booking.checkin_status === 'checked out'
+                            ? 'secondary'
+                            : 'warning'
+                        }
+                        size="sm"
+                    >
+                        {booking.checkin_status.toUpperCase()}
                     </Chip>
                   </TableCell>
                   <TableCell>
