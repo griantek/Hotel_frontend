@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { API_URLS } from "@/utils/constants";
+import { use } from 'react';
 import {
   Card,
   CardBody,
@@ -31,7 +32,8 @@ interface Booking {
   notes?: string;
 }
 
-export default function BookingDetails({ params }: { params: { id: string } }) {
+export default function BookingDetails({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
   const router = useRouter();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,9 +49,14 @@ export default function BookingDetails({ params }: { params: { id: string } }) {
         }
 
         const response = await axios.get(
-          `${API_URLS.BACKEND_URL}/api/bookings/${params.id}`
+          `${API_URLS.BACKEND_URL}/api/bookings/${resolvedParams.id}`
         );
-        setBooking(response.data);
+        
+        if (response.data && response.data.user) {
+          setBooking(response.data);
+        } else {
+          setError('Invalid booking data received');
+        }
       } catch (err) {
         setError('Failed to load booking details');
       } finally {
@@ -58,11 +65,11 @@ export default function BookingDetails({ params }: { params: { id: string } }) {
     };
 
     fetchBooking();
-  }, [params.id, router]);
+  }, [resolvedParams.id, router]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!booking) return <div>Booking not found</div>;
+  if (!booking || !booking.user) return <div>Booking not found</div>;
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
