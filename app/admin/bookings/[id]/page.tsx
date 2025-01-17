@@ -258,7 +258,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
             </div>
           </div>
           
-          {/* {booking.verification_status === 'verified' && (
+          {booking.verification_status === 'verified' && (
             <div className="mt-4">
               <h3 className="font-semibold mb-2">Room Assignment</h3>
               <div className="flex gap-2">
@@ -275,26 +275,8 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
                 </Button>
               </div>
             </div>
-          )} */}
+          )}
 
-          {booking.verification_status === 'verified' && (
-                <div className="mt-4">
-                    <h3 className="font-semibold mb-2">Check-in Status</h3>
-                    <Select
-                        selectedKeys={[booking.checkin_status]}
-                        onSelectionChange={(keys) => {
-                            const value = Array.from(keys)[0] as string;
-                            handleStatusUpdate({ 
-                                checkin_status: value as 'pending' | 'checked_in' | 'checked_out' 
-                            });
-                        }}
-                    >
-                        <SelectItem key="pending">Pending</SelectItem>
-                        <SelectItem key="checked_in">Checked In</SelectItem>
-                        <SelectItem key="checked_out">Checked Out</SelectItem>
-                    </Select>
-                </div>
-            )}
 
           {isApproachingCheckIn && (
             <div className="mt-4">
