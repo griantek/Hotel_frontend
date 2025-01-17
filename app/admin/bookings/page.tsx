@@ -118,28 +118,63 @@ export default function BookingsPage() {
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (!searchTerm) return statusFilter === 'all' || booking.status === statusFilter;
+//   const filteredBookings = bookings.filter(booking => {
+//     if (!searchTerm) return statusFilter === 'all' || booking.status === statusFilter;
 
-    const matchesSearch = 
+//     const matchesSearch = 
+//       (booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+//       (booking.user?.phone?.includes(searchTerm) || false) ||
+//       (booking.room_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+    
+//     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+    
+//     // Date filter
+//     let matchesDate = true;
+//     const today = moment().format('YYYY-MM-DD');
+//     if (dateFilter === 'checkinToday') {
+//         const checkInDate = moment(booking.check_in_date).format('YYYY-MM-DD');
+//         matchesDate = checkInDate === today;
+//         console.log('Check-in comparison:', {
+//           checkInDate,
+//           today,
+//           matches: checkInDate === today
+//         });
+//       } else if (dateFilter === 'checkoutToday') {
+//         const checkOutDate = moment(booking.check_out_date).format('YYYY-MM-DD');
+//         matchesDate = checkOutDate === today;
+//         console.log('Check-out comparison:', {
+//           checkOutDate,
+//           today,
+//           matches: checkOutDate === today
+//         });
+//       }
+
+//     return matchesSearch && matchesStatus && matchesDate;
+//   });
+const filteredBookings = bookings.filter(booking => {
+    // Always check all three filters
+    const matchesSearch = !searchTerm || (
       (booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
       (booking.user?.phone?.includes(searchTerm) || false) ||
-      (booking.room_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      (booking.room_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
+    );
     
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
     
-    // Date filter
     let matchesDate = true;
-    const today = moment();
+    const today = moment().format('YYYY-MM-DD');
+    
     if (dateFilter === 'checkinToday') {
-        matchesDate = moment(booking.check_in_date).isSame(today, 'day');
+      const checkInDate = moment(booking.check_in_date).format('YYYY-MM-DD');
+      matchesDate = checkInDate === today;
     } else if (dateFilter === 'checkoutToday') {
-        matchesDate = moment(booking.check_out_date).isSame(today, 'day');
+      const checkOutDate = moment(booking.check_out_date).format('YYYY-MM-DD');
+      matchesDate = checkOutDate === today;
     }
-
+  
     return matchesSearch && matchesStatus && matchesDate;
   });
-
+  
   const totalRevenue = filteredBookings
     .filter(b => b.status === 'confirmed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
