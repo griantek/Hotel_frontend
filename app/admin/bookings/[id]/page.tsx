@@ -239,22 +239,20 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               <p>Check-in: {booking.check_in_date} at {booking.check_in_time}</p>
               <p>Check-out: {booking.check_out_date} at {booking.check_out_time}</p>
 
-              {isCheckInDay && (
                 <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Verification Status</h3>
-                  <Select
-                    selectedKeys={[booking.verification_status]}
-                    onSelectionChange={(keys) => {
-                        const value = Array.from(keys)[0] as string;
-                        handleStatusUpdate({ verification_status: value as 'pending' | 'verified' | 'not_verified' });
-                    }}
-                    >
-                    <SelectItem key="pending">Pending</SelectItem>
-                    <SelectItem key="verified">Verified</SelectItem>
-                    <SelectItem key="not_verified">Not Verified</SelectItem>
+                <h3 className="font-semibold mb-2">Verification Status</h3>
+                <Select
+                  selectedKeys={[booking.verification_status]}
+                  onSelectionChange={(keys) => {
+                    const value = Array.from(keys)[0] as string;
+                    handleStatusUpdate({ verification_status: value as 'pending' | 'verified' | 'not_verified' });
+                  }}
+                  >
+                  <SelectItem key="pending">Pending</SelectItem>
+                  <SelectItem key="verified">Verified</SelectItem>
+                  <SelectItem key="not_verified">Not Verified</SelectItem>
                 </Select>
                 </div>
-              )}
             </div>
           </div>
           
