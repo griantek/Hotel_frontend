@@ -15,6 +15,11 @@ import {
   Chip,
   Select,
   SelectItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -50,6 +55,8 @@ export default function BookingsPage() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -80,17 +87,25 @@ export default function BookingsPage() {
     fetchBookings();
   }, [router]);
 
-  const handleStatusChange = async (bookingId: number) => {
+  const handleCancelClick = (bookingId: number) => {
+    setSelectedBookingId(bookingId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!selectedBookingId) return;
+    
     try {
       const token = localStorage.getItem('adminToken');
       await axios.delete(
-        `${API_URLS.BACKEND_URL}/api/admin/bookings/${bookingId}`,
+        `${API_URLS.BACKEND_URL}/api/admin/bookings/${selectedBookingId}`,
         { 
           headers: { Authorization: `Bearer ${token}` }
         }
       );
       
-      setBookings(bookings.filter(booking => booking.id !== bookingId));
+      setBookings(bookings.filter(booking => booking.id !== selectedBookingId));
+      setIsModalOpen(false);
     } catch (error) {
       setError('Failed to cancel booking');
     }
@@ -220,11 +235,38 @@ export default function BookingsPage() {
                         size="sm"
                         color="danger"
                         variant="flat"
-                        onPress={() => handleStatusChange(booking.id)}
-                      >
+                        onPress={() => handleCancelClick(booking.id)}
+                        >
                         Cancel
-                      </Button>
+                        </Button>
                       )}
+                      <Modal 
+                        isOpen={isModalOpen} 
+                        onClose={() => setIsModalOpen(false)}
+                    >
+                        <ModalContent>
+                        <ModalHeader>Confirm Cancellation</ModalHeader>
+                        <ModalBody>
+                            Are you sure you want to cancel this booking?
+                            This action cannot be undone.
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button
+                            color="default"
+                            variant="flat"
+                            onPress={() => setIsModalOpen(false)}
+                            >
+                            Close
+                            </Button>
+                            <Button 
+                            color="danger" 
+                            onPress={handleConfirmCancel}
+                            >
+                            Confirm Cancel
+                            </Button>
+                        </ModalFooter>
+                        </ModalContent>
+                    </Modal>
                     </div>
                   </TableCell>
                 </TableRow>
