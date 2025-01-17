@@ -178,8 +178,6 @@ export default function BookingsPage() {
                 <SelectItem key="cancelled" value="cancelled">Cancelled</SelectItem>
               </Select>
             </div>
-
-            <div className="w-48">
                 <Select 
                     label="Date Filter" 
                     value={dateFilter}
@@ -190,7 +188,6 @@ export default function BookingsPage() {
                     <SelectItem key="checkedInToday" value="checkedInToday">Check-in Today</SelectItem>
                     <SelectItem key="checkedOutToday" value="checkedOutToday">Check-out Today</SelectItem>
                 </Select>
-            </div>
 
             <div className="flex gap-2">
               <Chip color="success">
