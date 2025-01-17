@@ -160,12 +160,15 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               <div className="mt-4">
                 <h3 className="font-semibold mb-2">Payment Status</h3>
                 <Select
-                  value={booking.paid_status}
-                  onChange={(e) => handleStatusUpdate({ paid_status: e.target.value })}
-                >
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
+                    selectedKeys={[booking.paid_status]} // Change value to selectedKeys
+                    onSelectionChange={(keys) => {
+                        const value = Array.from(keys)[0] as string;
+                        handleStatusUpdate({ paid_status: value });
+                    }}
+                    >
+                    <SelectItem key="unpaid">Unpaid</SelectItem>
+                    <SelectItem key="partially_paid">Partially Paid</SelectItem>
+                    <SelectItem key="paid">Paid</SelectItem>
                 </Select>
               </div>
             </div>
@@ -179,13 +182,16 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
                 <div className="mt-4">
                   <h3 className="font-semibold mb-2">Verification Status</h3>
                   <Select
-                    value={booking.verification_status}
-                    onChange={(e) => handleStatusUpdate({ verification_status: e.target.value as 'pending' | 'verified' | 'not_verified' })}
-                  >
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="verified">Verified</SelectItem>
-                    <SelectItem value="not_verified">Not Verified</SelectItem>
-                  </Select>
+                    selectedKeys={[booking.verification_status]}
+                    onSelectionChange={(keys) => {
+                        const value = Array.from(keys)[0] as string;
+                        handleStatusUpdate({ verification_status: value as 'pending' | 'verified' | 'not_verified' });
+                    }}
+                    >
+                    <SelectItem key="pending">Pending</SelectItem>
+                    <SelectItem key="verified">Verified</SelectItem>
+                    <SelectItem key="not_verified">Not Verified</SelectItem>
+                </Select>
                 </div>
               )}
             </div>
