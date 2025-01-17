@@ -11,26 +11,25 @@ import {
   Button,
   Chip,
   Divider,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 
 interface Booking {
-  id: number;
-  user: {
     id: number;
-    name: string;
-    phone: string;
-  };
-  room_type: string;
-  check_in_date: string;
-  check_in_time: string;
-  check_out_date: string;
-  check_out_time: string;
-  guest_count: number;
-  total_price: number;
-  status: string;
-  paid_status: string;
-  notes?: string;
-}
+    room_type: string;
+    check_in_date: string;
+    check_in_time: string;
+    check_out_date: string;
+    check_out_time: string;
+    guest_count: number;
+    total_price: number;
+    notes: string | null;
+    guest_name: string;
+    guest_phone: string;
+    status: string;
+    paid_status: string;
+  }
 
 export default function BookingDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -52,7 +51,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
           `${API_URLS.BACKEND_URL}/api/bookings/${resolvedParams.id}`
         );
         
-        if (response.data && response.data.user) {
+        if (response.data && response.data.id) {
           setBooking(response.data);
         } else {
           setError('Invalid booking data received');
@@ -67,9 +66,24 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     fetchBooking();
   }, [resolvedParams.id, router]);
 
+  const handlePaidStatusChange = async (newStatus: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.patch(
+        `${API_URLS.BACKEND_URL}/api/bookings/${booking?.id}/payment-status`,
+        { paid_status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setBooking(prev => prev ? { ...prev, paid_status: newStatus } : null);
+    } catch (err) {
+      setError('Failed to update payment status');
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!booking || !booking.user) return <div>Booking not found</div>;
+  if (!booking) return <div>Booking not found</div>;
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -89,8 +103,8 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold">Guest Information</h3>
-              <p>Name: {booking.user.name}</p>
-              <p>Phone: {booking.user.phone}</p>
+              <p>Name: {booking?.guest_name}</p>
+              <p>Phone: {booking?.guest_phone}</p>
             </div>
             <div>
               <h3 className="font-semibold">Booking Status</h3>
@@ -111,6 +125,17 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               <p>Type: {booking.room_type}</p>
               <p>Guests: {booking.guest_count}</p>
               <p>Price: ${booking.total_price.toFixed(2)}</p>
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2">Payment Status</h3>
+                <Select
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handlePaidStatusChange(e.target.value)}
+                    value={booking.paid_status}
+                >
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                </Select>
+            </div>
             </div>
             <div>
               <h3 className="font-semibold">Check-in/out</h3>
@@ -118,6 +143,8 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               <p>Check-out: {booking.check_out_date} at {booking.check_out_time}</p>
             </div>
           </div>
+
+
 
           {booking.notes && (
             <>
