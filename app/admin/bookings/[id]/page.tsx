@@ -33,6 +33,7 @@ interface Booking {
   paid_status: string;
   verification_status: 'pending' | 'verified' | 'not_verified';
   notes?: string;
+  checkout_reminder_sent: boolean;
 }
 
 export default function BookingDetails({ params }: { params: Promise<{ id: string }> }) {
@@ -48,6 +49,9 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
 
   const isApproachingCheckIn = booking ? 
     moment(booking.check_in_date).diff(moment(), 'days') <= 1 : false;
+  
+  const isCheckoutDay = booking ? 
+    moment(booking.check_out_date).isSame(moment(), 'day') : false;  
 
   useEffect(() => {
     fetchBooking();
@@ -109,6 +113,22 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
       );
     } catch (err) {
       setError('Failed to send reminder');
+    }
+  };
+
+  const handleSendCheckoutReminder = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.post(
+        `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/checkout-notify`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      await fetchBooking();
+    } catch (err) {
+      setError('Failed to send checkout reminder');
     }
   };
 
@@ -226,6 +246,17 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               </Button>
             </div>
           )}
+
+        {isCheckoutDay && !booking.checkout_reminder_sent && (
+                <div className="mt-4">
+                <Button
+                    color="warning"
+                    onPress={handleSendCheckoutReminder}
+                >
+                    Send Checkout Reminder
+                </Button>
+                </div>
+            )}
 
           {booking.notes && (
             <>
