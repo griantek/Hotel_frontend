@@ -36,9 +36,10 @@ interface Booking {
   total_price: number;
   status: string;
   paid_status: string;
-  verification_status: 'pending' | 'verified' | 'not_verified';
+  verification_status:string;
   notes?: string;
   checkout_reminder_sent: boolean;
+  check_in_status: string;
 }
 
 export default function BookingDetails({ params }: { params: Promise<{ id: string }> }) {
