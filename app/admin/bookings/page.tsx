@@ -48,7 +48,7 @@ interface Booking {
     status: string;
     paid_status: string;
     notes?: string;
-    checkin_status: 'not yet' | 'checked in' | 'checked out'; // Add this line
+    checkin_status: string;
   }
   
 
