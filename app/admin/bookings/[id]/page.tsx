@@ -275,7 +275,6 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
             </div>
           )}
           
-          // Add this after the room assignment div and before the reminders section
           {booking.verification_status === 'verified' && (
             <div className="mt-4">
               <h3 className="font-semibold mb-2">Check-in/out Management</h3>
