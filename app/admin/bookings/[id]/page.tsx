@@ -274,7 +274,45 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           )}
-
+          
+          // Add this after the room assignment div and before the reminders section
+          {booking.verification_status === 'verified' && (
+            <div className="mt-4">
+              <h3 className="font-semibold mb-2">Check-in/out Management</h3>
+              <div className="flex gap-2">
+                <Button
+                  color="success"
+                  isDisabled={booking.checkin_status === 'checked_in'}
+                  onPress={() => handleStatusUpdate({ checkin_status: 'checked_in' })}
+                >
+                  Check In
+                </Button>
+                <Button
+                  color="warning"
+                  isDisabled={booking.checkin_status !== 'checked_in' || booking.paid_status !== 'paid'}
+                  onPress={() => handleStatusUpdate({ 
+                    checkin_status: 'checked_out',
+                    status: 'completed'
+                  })}
+                >
+                  Check Out
+                </Button>
+              </div>
+              <div className="mt-2">
+                <Chip
+                  color={
+                    booking.checkin_status === 'checked_in' 
+                      ? 'success' 
+                      : booking.checkin_status === 'checked_out' 
+                        ? 'warning' 
+                        : 'default'
+                  }
+                >
+                  {booking.checkin_status ? booking.checkin_status.replace('_', ' ').toUpperCase() : 'NOT CHECKED IN'}
+                </Chip>
+              </div>
+            </div>
+          )}
 
           {(isApproachingCheckIn || (isCheckoutDay && !booking.checkout_reminder_sent)) && (
             <div className="mt-4 flex gap-2">
