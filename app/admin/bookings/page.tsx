@@ -80,20 +80,19 @@ export default function BookingsPage() {
     fetchBookings();
   }, [router]);
 
-  const handleStatusChange = async (bookingId: number, newStatus: string) => {
+  const handleStatusChange = async (bookingId: number) => {
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.patch(
-        `${API_URLS.BACKEND_URL}/api/bookings/${bookingId}`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await axios.delete(
+        `${API_URLS.BACKEND_URL}/api/admin/bookings/${bookingId}`,
+        { 
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
       
-      setBookings(bookings.map(booking => 
-        booking.id === bookingId ? {...booking, status: newStatus} : booking
-      ));
+      setBookings(bookings.filter(booking => booking.id !== bookingId));
     } catch (error) {
-      setError('Failed to update booking status');
+      setError('Failed to cancel booking');
     }
   };
 
@@ -218,13 +217,13 @@ export default function BookingsPage() {
                       </Button>
                       {booking.status === 'confirmed' && (
                         <Button
-                          size="sm"
-                          color="danger"
-                          variant="flat"
-                          onPress={() => handleStatusChange(booking.id, 'cancelled')}
-                        >
-                          Cancel
-                        </Button>
+                        size="sm"
+                        color="danger"
+                        variant="flat"
+                        onPress={() => handleStatusChange(booking.id)}
+                      >
+                        Cancel
+                      </Button>
                       )}
                     </div>
                   </TableCell>
