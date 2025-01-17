@@ -21,20 +21,24 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
 
 interface Booking {
-  id: number;
-  guest_name: string;
-  guest_phone: string;
-  room_type: string;
-  check_in_date: string;
-  check_in_time: string;
-  check_out_date: string;
-  check_out_time: string;
-  guest_count: number;
-  total_price: number;
-  status: string;
-  paid_status: string;
-  notes?: string;
-}
+    id: number;
+    user: {
+      id: number;
+      name: string;
+      phone: string;
+    };
+    room_type: string;
+    check_in_date: string;
+    check_in_time: string;
+    check_out_date: string;
+    check_out_time: string;
+    guest_count: number;
+    total_price: number;
+    status: string;
+    paid_status: string;
+    notes?: string;
+  }
+  
 
 export default function BookingsPage() {
   const router = useRouter();
@@ -56,15 +60,18 @@ export default function BookingsPage() {
           return;
         }
 
-        const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/bookings`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await fetch(`${API_URLS.BACKEND_URL}/admin/bookings`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
-        setBookings(response.data);
-      } catch (error: any) {
-        setError(error.response?.data?.error || 'Failed to fetch bookings');
-        if (error.response?.status === 401) {
-          router.push('/admin/login');
-        }
+
+        if (!response.ok) throw new Error('Failed to fetch bookings');
+        
+        const data = await response.json();
+        setBookings(data);
+      } catch (err) {
+        setError('Failed to load bookings');
       } finally {
         setLoading(false);
       }
@@ -91,10 +98,12 @@ export default function BookingsPage() {
   };
 
   const filteredBookings = bookings.filter(booking => {
+    if (!searchTerm) return statusFilter === 'all' || booking.status === statusFilter;
+
     const matchesSearch = 
-      booking.guest_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.guest_phone.includes(searchTerm) ||
-      booking.room_type.toLowerCase().includes(searchTerm.toLowerCase());
+      (booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (booking.user?.phone?.includes(searchTerm) || false) ||
+      (booking.room_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
     
@@ -172,8 +181,8 @@ export default function BookingsPage() {
                   <TableCell>{booking.id}</TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{booking.guest_name}</div>
-                      <div className="text-sm text-gray-500">{booking.guest_phone}</div>
+                      <div className="font-medium">{booking.user?.name}</div>
+                      <div className="text-sm text-gray-500">{booking.user?.phone}</div>
                     </div>
                   </TableCell>
                   <TableCell>
