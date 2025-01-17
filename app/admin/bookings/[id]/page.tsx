@@ -39,7 +39,7 @@ interface Booking {
   verification_status:string;
   notes?: string;
   checkout_reminder_sent: boolean;
-  check_in_status: string;
+  checkin_status: string;
 }
 
 export default function BookingDetails({ params }: { params: Promise<{ id: string }> }) {
@@ -281,11 +281,11 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
                 <div className="mt-4">
                     <h3 className="font-semibold mb-2">Check-in Status</h3>
                     <Select
-                        selectedKeys={[booking.check_in_status]}
+                        selectedKeys={[booking.checkin_status]}
                         onSelectionChange={(keys) => {
                             const value = Array.from(keys)[0] as string;
                             handleStatusUpdate({ 
-                                check_in_status: value as 'pending' | 'checked_in' | 'checked_out' 
+                                checkin_status: value as 'pending' | 'checked_in' | 'checked_out' 
                             });
                         }}
                     >
