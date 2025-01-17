@@ -24,16 +24,11 @@ import {
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
+import moment from 'moment';
 
 // Add helper function to check if date is today
 const isToday = (dateString: string) => {
-    const today = new Date();
-    const date = new Date(dateString);
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
+    return moment(dateString).isSame(moment(), 'day');
   };
 
 interface Booking {
@@ -135,10 +130,11 @@ export default function BookingsPage() {
     
     // Date filter
     let matchesDate = true;
+    const today = moment();
     if (dateFilter === 'checkinToday') {
-        matchesDate = isToday(booking.check_in_date);
+        matchesDate = moment(booking.check_in_date).isSame(today, 'day');
     } else if (dateFilter === 'checkoutToday') {
-        matchesDate = isToday(booking.check_out_date);
+        matchesDate = moment(booking.check_out_date).isSame(today, 'day');
     }
 
     return matchesSearch && matchesStatus && matchesDate;
