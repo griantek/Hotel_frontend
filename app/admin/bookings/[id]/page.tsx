@@ -15,6 +15,11 @@ import {
   Select,
   SelectItem,
   Input,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 
 interface Booking {
@@ -43,7 +48,9 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [roomNumber, setRoomNumber] = useState('');
-
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [updatedBooking, setUpdatedBooking] = useState<Partial<Booking>>({});
   const isCheckInDay = booking ? 
     moment(booking.check_in_date).isSame(moment(), 'day') : false;
 
@@ -131,6 +138,39 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
       setError('Failed to send checkout reminder');
     }
   };
+
+  // Add new handlers
+    const handleCancelBooking = async () => {
+        try {
+        const token = localStorage.getItem('adminToken');
+        await axios.delete(
+            `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}`,
+            {
+            headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+        router.push('/admin/bookings');
+        } catch (err) {
+        setError('Failed to cancel booking');
+        }
+    };
+
+    const handleUpdateBooking = async () => {
+        try {
+          const token = localStorage.getItem('adminToken');
+          await axios.patch(
+            `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
+            updatedBooking,
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          );
+          setIsUpdateModalOpen(false);
+          await fetchBooking();
+        } catch (err) {
+          setError('Failed to update booking');
+        }
+      };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -267,8 +307,95 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               </div>
             </>
           )}
+
+        <Divider className="my-4" />
+        <div className="flex justify-end gap-2">
+        {booking.status === 'confirmed' && (
+            <>
+            <Button
+                color="primary"
+                variant="flat"
+                onPress={() => setIsUpdateModalOpen(true)}
+            >
+                Update Booking
+            </Button>
+            <Button
+                color="danger"
+                variant="flat"
+                onPress={() => setIsCancelModalOpen(true)}
+            >
+                Cancel Booking
+            </Button>
+            </>
+        )}
+        </div>
+
         </CardBody>
       </Card>
+            <Modal 
+        isOpen={isUpdateModalOpen} 
+        onClose={() => setIsUpdateModalOpen(false)}
+        >
+        <ModalContent>
+            <ModalHeader>Update Booking</ModalHeader>
+            <ModalBody>
+            <div className="space-y-4">
+                <Input
+                label="Room Type"
+                value={updatedBooking.room_type || booking.room_type}
+                onChange={(e) => setUpdatedBooking({
+                    ...updatedBooking,
+                    room_type: e.target.value
+                })}
+                />
+                <Input
+                label="Guest Count"
+                type="number"
+                value={(updatedBooking.guest_count || booking.guest_count).toString()}
+                onChange={(e) => setUpdatedBooking({
+                    ...updatedBooking,
+                    guest_count: parseInt(e.target.value)
+                })}
+                />
+                <Input
+                label="Notes"
+                value={updatedBooking.notes || booking.notes}
+                onChange={(e) => setUpdatedBooking({
+                    ...updatedBooking,
+                    notes: e.target.value
+                })}
+                />
+            </div>
+            </ModalBody>
+            <ModalFooter>
+            <Button color="default" onPress={() => setIsUpdateModalOpen(false)}>
+                Close
+            </Button>
+            <Button color="primary" onPress={handleUpdateBooking}>
+                Save Changes
+            </Button>
+            </ModalFooter>
+        </ModalContent>
+        </Modal>
+        <Modal 
+        isOpen={isCancelModalOpen} 
+        onClose={() => setIsCancelModalOpen(false)}
+        >
+        <ModalContent>
+            <ModalHeader>Confirm Cancellation</ModalHeader>
+            <ModalBody>
+            Are you sure you want to cancel this booking? This action cannot be undone.
+            </ModalBody>
+            <ModalFooter>
+            <Button color="default" onPress={() => setIsCancelModalOpen(false)}>
+                Close
+            </Button>
+            <Button color="danger" onPress={handleCancelBooking}>
+                Cancel Booking
+            </Button>
+            </ModalFooter>
+        </ModalContent>
+        </Modal>
     </div>
   );
 }
