@@ -29,8 +29,12 @@ import { API_URLS } from "@/utils/constants";
 const isToday = (dateString: string) => {
     const today = new Date();
     const date = new Date(dateString);
-    return date.toDateString() === today.toDateString();
-};
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
 
 interface Booking {
     id: number;
@@ -64,8 +68,8 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [dateFilter, setDateFilter] = useState('all');
-
+  const [dateFilter, setDateFilter] = useState<'all' | 'checkinToday' | 'checkoutToday'>('all');
+  
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -128,15 +132,15 @@ export default function BookingsPage() {
       (booking.room_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     
     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-
-     // New date filter
-     let matchesDate = true;
-     if (dateFilter === 'checkedInToday') {
-       matchesDate = isToday(booking.check_in_date);
-     } else if (dateFilter === 'checkedOutToday') {
-       matchesDate = isToday(booking.check_out_date);
-     }
     
+    // Date filter
+    let matchesDate = true;
+    if (dateFilter === 'checkinToday') {
+        matchesDate = isToday(booking.check_in_date);
+    } else if (dateFilter === 'checkoutToday') {
+        matchesDate = isToday(booking.check_out_date);
+    }
+
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -181,13 +185,13 @@ export default function BookingsPage() {
 
             <div className="w-48">
                 <Select 
-                    label="Date Filter" 
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
+                placeholder="Filter by date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}
                 >
-                    <SelectItem key="all" value="all">All Dates</SelectItem>
-                    <SelectItem key="checkedInToday" value="checkedInToday">Check-in Today</SelectItem>
-                    <SelectItem key="checkedOutToday" value="checkedOutToday">Check-out Today</SelectItem>
+                <SelectItem key="all" value="all">All Dates</SelectItem>
+                <SelectItem key="checkinToday" value="checkinToday">Check-in Today</SelectItem>
+                <SelectItem key="checkoutToday" value="checkoutToday">Check-out Today</SelectItem>
                 </Select>
             </div>
 
