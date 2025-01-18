@@ -52,6 +52,31 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [updatedBooking, setUpdatedBooking] = useState<Partial<Booking>>({});
+  const [availability, setAvailability] = useState<{
+    available: boolean;
+    remainingRooms: number;
+    roomPricePerDay: number;
+    estimatedTotalPrice: number;
+    numberOfDays: number;
+  } | null>(null);
+
+  const checkAvailability = async (updateData: Partial<Booking>) => {
+    if (!updateData.room_type && !updateData.check_in_date && !updateData.check_out_date) return;
+  
+    try {
+      const response = await axios.post(`${API_URLS.BACKEND_URL}/api/rooms/availability`, {
+        roomType: updateData.room_type || booking?.room_type,
+        checkInDate: updateData.check_in_date || booking?.check_in_date,
+        checkInTime: updateData.check_in_time || booking?.check_in_time,
+        checkOutDate: updateData.check_out_date || booking?.check_out_date,
+        checkOutTime: updateData.check_out_time || booking?.check_out_time
+      });
+      setAvailability(response.data);
+    } catch (error) {
+      console.error("Error checking availability:", error);
+    }
+  };
+
   const isCheckInDay = booking ? 
     moment(booking.check_in_date).isSame(moment(), 'day') : false;
 
@@ -60,6 +85,12 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   
   const isCheckoutDay = booking ? 
     moment(booking.check_out_date).isSame(moment(), 'day') : false;  
+
+    useEffect(() => {
+      if (updatedBooking.room_type || updatedBooking.check_in_date || updatedBooking.check_out_date) {
+        checkAvailability(updatedBooking);
+      }
+    }, [updatedBooking.room_type, updatedBooking.check_in_date, updatedBooking.check_out_date]);  
 
   useEffect(() => {
     fetchBooking();
@@ -368,50 +399,132 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
 
         </CardBody>
       </Card>
-            <Modal 
-        isOpen={isUpdateModalOpen} 
-        onClose={() => setIsUpdateModalOpen(false)}
+        <Modal 
+          isOpen={isUpdateModalOpen} 
+          onClose={() => setIsUpdateModalOpen(false)}
         >
-        <ModalContent>
+          <ModalContent>
             <ModalHeader>Update Booking</ModalHeader>
             <ModalBody>
-            <div className="space-y-4">
-                <Input
-                label="Room Type"
-                value={updatedBooking.room_type || booking.room_type}
-                onChange={(e) => setUpdatedBooking({
+              <div className="space-y-4">
+                <Select
+                  label="Room Type"
+                  selectedKeys={[updatedBooking.room_type || booking.room_type]}
+                  onChange={(e) => setUpdatedBooking({
                     ...updatedBooking,
                     room_type: e.target.value
-                })}
-                />
+                  })}
+                >
+                  <SelectItem key="Single Room" value="Single Room">Single Room</SelectItem>
+                  <SelectItem key="Double Room" value="Double Room">Double Room</SelectItem>
+                  <SelectItem key="Suite" value="Suite">Suite</SelectItem>
+                </Select>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    type="date"
+                    label="Check-in Date"
+                    value={updatedBooking.check_in_date || booking.check_in_date}
+                    onChange={(e) => setUpdatedBooking({
+                      ...updatedBooking,
+                      check_in_date: e.target.value
+                    })}
+                  />
+                  <Input
+                    type="time"
+                    label="Check-in Time"
+                    value={updatedBooking.check_in_time || booking.check_in_time}
+                    onChange={(e) => setUpdatedBooking({
+                      ...updatedBooking,
+                      check_in_time: e.target.value
+                    })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    type="date"
+                    label="Check-out Date"
+                    value={updatedBooking.check_out_date || booking.check_out_date}
+                    onChange={(e) => setUpdatedBooking({
+                      ...updatedBooking,
+                      check_out_date: e.target.value
+                    })}
+                  />
+                  <Input
+                    type="time"
+                    label="Check-out Time"
+                    value={updatedBooking.check_out_time || booking.check_out_time}
+                    onChange={(e) => setUpdatedBooking({
+                      ...updatedBooking,
+                      check_out_time: e.target.value
+                    })}
+                  />
+                </div>
+
                 <Input
-                label="Guest Count"
-                type="number"
-                value={(updatedBooking.guest_count || booking.guest_count).toString()}
-                onChange={(e) => setUpdatedBooking({
+                  type="number"
+                  label="Number of Guests"
+                  min={1}
+                  max={4}
+                  value={(updatedBooking.guest_count || booking.guest_count).toString()}
+                  onChange={(e) => setUpdatedBooking({
                     ...updatedBooking,
                     guest_count: parseInt(e.target.value)
-                })}
+                  })}
                 />
+
                 <Input
-                label="Notes"
-                value={updatedBooking.notes || booking.notes}
-                onChange={(e) => setUpdatedBooking({
+                  label="Notes"
+                  value={updatedBooking.notes || booking.notes}
+                  onChange={(e) => setUpdatedBooking({
                     ...updatedBooking,
                     notes: e.target.value
-                })}
+                  })}
+                  placeholder="Any special requests?"
                 />
-            </div>
+
+                {/* Add availability check info here */}
+                {availability && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Chip 
+                        color={availability.available ? "success" : "danger"}
+                        size="sm"
+                      >
+                        {availability.available 
+                          ? `${availability.remainingRooms} Rooms Available`
+                          : "Fully Booked"
+                        }
+                      </Chip>
+                      {availability.available && (
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">
+                            ${availability.roomPricePerDay}/night • {availability.numberOfDays} nights
+                          </p>
+                          <p className="text-base font-semibold text-success">
+                            Total: ${availability.estimatedTotalPrice}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </ModalBody>
             <ModalFooter>
-            <Button color="default" onPress={() => setIsUpdateModalOpen(false)}>
+              <Button color="default" onPress={() => setIsUpdateModalOpen(false)}>
                 Close
-            </Button>
-            <Button color="primary" onPress={handleUpdateBooking}>
+              </Button>
+              <Button 
+                color="primary" 
+                onPress={handleUpdateBooking}
+                isDisabled={!availability?.available}
+              >
                 Save Changes
-            </Button>
+              </Button>
             </ModalFooter>
-        </ModalContent>
+          </ModalContent>
         </Modal>
         <Modal 
         isOpen={isCancelModalOpen} 
