@@ -51,7 +51,15 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   const [roomNumber, setRoomNumber] = useState('');
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [updatedBooking, setUpdatedBooking] = useState<Partial<Booking>>({});
+  const [updatedBooking, setUpdatedBooking] = useState<Partial<Booking>>({
+    room_type: '',
+    check_in_date: '',
+    check_in_time: '',
+    check_out_date: '', 
+    check_out_time: '',
+    guest_count: 1,
+    notes: ''
+  });
   const [availability, setAvailability] = useState<{
     available: boolean;
     remainingRooms: number;
@@ -59,7 +67,14 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     estimatedTotalPrice: number;
     numberOfDays: number;
   } | null>(null);
-
+  const validateDates = (checkIn: string, checkOut: string) => {
+    const currentDate = moment().format('YYYY-MM-DD');
+    const checkInDate = moment(checkIn);
+    const checkOutDate = moment(checkOut);
+    
+    return checkInDate.isSameOrAfter(currentDate) && 
+           checkOutDate.isAfter(checkInDate);
+  };
   const checkAvailability = async (updateData: Partial<Booking>) => {
     if (!updateData.room_type && !updateData.check_in_date && !updateData.check_out_date) return;
   
@@ -87,10 +102,54 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     moment(booking.check_out_date).isSame(moment(), 'day') : false;  
 
     useEffect(() => {
-      if (updatedBooking.room_type || updatedBooking.check_in_date || updatedBooking.check_out_date) {
-        checkAvailability(updatedBooking);
+      const checkRoomAvailability = async () => {
+        if (!updatedBooking.room_type && !updatedBooking.check_in_date && !updatedBooking.check_out_date) {
+          return;
+        }
+    
+        if (updatedBooking.check_in_date && updatedBooking.check_out_date) {
+          if (!validateDates(updatedBooking.check_in_date, updatedBooking.check_out_date)) {
+            return;
+          }
+        }
+    
+        try {
+          const response = await axios.post(`${API_URLS.BACKEND_URL}/api/rooms/availability`, {
+            roomType: updatedBooking.room_type || booking?.room_type || '',
+            checkInDate: updatedBooking.check_in_date || booking?.check_in_date || '',
+            checkInTime: updatedBooking.check_in_time || booking?.check_in_time || '',
+            checkOutDate: updatedBooking.check_out_date || booking?.check_out_date || '',
+            checkOutTime: updatedBooking.check_out_time || booking?.check_out_time || ''
+          });
+          setAvailability(response.data);
+        } catch (error) {
+          console.error("Error checking availability:", error);
+          setAvailability(null);
+        }
+      };
+    
+      checkRoomAvailability();
+    }, [
+      updatedBooking.room_type, 
+      updatedBooking.check_in_date, 
+      updatedBooking.check_out_date,
+      booking?.room_type,
+      booking?.check_in_date,
+      booking?.check_out_date
+    ]); 
+    useEffect(() => {
+      if (booking) {
+        setUpdatedBooking({
+          room_type: booking.room_type || '',
+          check_in_date: booking.check_in_date || '',
+          check_in_time: booking.check_in_time || '',
+          check_out_date: booking.check_out_date || '',
+          check_out_time: booking.check_out_time || '',
+          guest_count: booking.guest_count || 1,
+          notes: booking.notes || ''
+        });
       }
-    }, [updatedBooking.room_type, updatedBooking.check_in_date, updatedBooking.check_out_date]);  
+    }, [booking]);  
 
   useEffect(() => {
     fetchBooking();
