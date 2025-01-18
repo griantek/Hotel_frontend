@@ -38,6 +38,7 @@ export default function AdminLogin() {
       
       if (response.data.token) {
         localStorage.setItem('adminToken', response.data.token);
+        window.dispatchEvent(new Event('adminLoggedIn'));
         router.push('/admin/dashboard');
       }
     } catch (error: any) {

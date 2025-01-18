@@ -24,8 +24,21 @@ export const Navbar = () => {
   const navbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('adminToken');
-    setIsAdmin(!!adminToken);
+    const checkAdminStatus = () => {
+      const adminToken = localStorage.getItem('adminToken');
+      setIsAdmin(!!adminToken);
+    };
+
+    // Check initially
+    checkAdminStatus();
+
+    // Listen for login event
+    window.addEventListener('adminLoggedIn', checkAdminStatus);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('adminLoggedIn', checkAdminStatus);
+    };
   }, []);
 
   const handleLogout = () => {
