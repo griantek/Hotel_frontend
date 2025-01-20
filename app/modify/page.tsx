@@ -122,23 +122,25 @@ export default function ModifyBooking() {
       try {
         const response = await axios.get<BookingResponse>(`${API_URLS.BACKEND_URL}/api/bookings/${bookingId}`);
         const booking = response.data;
-        console.log('Booking data:', booking); // Debug log
+        console.log('Room type from API:', booking.room_type); // Debug log
         
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           name: booking.guest_name,
           phone: booking.guest_phone,
-          roomType: booking.room_type, // Verify this value
+          roomType: booking.room_type,
           checkInDate: booking.check_in_date,
           checkInTime: booking.check_in_time,
           checkOutDate: booking.check_out_date,
           checkOutTime: booking.check_out_time,
           guestCount: booking.guest_count,
           notes: booking.notes || ""
-        });
+        }));
       } catch (error) {
         console.error('Error fetching booking:', error);
       }
     };
+    
 
     if (bookingId) {
       fetchBooking();
@@ -232,24 +234,27 @@ export default function ModifyBooking() {
         <CardBody>
           <h1 className="text-2xl font-bold mb-6 text-center">Modify Booking</h1>
           <form onSubmit={handleSubmit} className="space-y-6">
+          
           <Select
             label="Room Type"
-            selectedKeys={new Set([formData.roomType])}
-            onSelectionChange={(keys) => {
-              const selectedRoom = Array.from(keys)[0] as string;
-              setFormData(prev => ({
-                ...prev,
-                roomType: selectedRoom
-              }));
+            defaultSelectedKeys={[formData.roomType]}
+            selectedKeys={[formData.roomType]}
+            onChange={(e) => {
+              handleChange({
+                target: {
+                  name: 'roomType',
+                  value: e.target.value
+                }
+              });
             }}
-            className="w-full"
+            isRequired
           >
             {roomTypes.map((room) => (
               <SelectItem 
-                key={room.type}
+                key={room.type} 
                 value={room.type}
               >
-                {room.type} (${room.price}/night)
+                {room.type}
               </SelectItem>
             ))}
           </Select>
