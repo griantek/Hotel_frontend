@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { Card, CardBody, Button, Skeleton } from "@nextui-org/react";
 import { CheckCircle } from "lucide-react";
-import { API_URLS } from "@/utils/constants";
+import { API_URLS, CHATBOT_NUMBER } from "@/utils/constants";
 interface BookingDetails {
   id: number;
   room_type: string;
@@ -117,7 +117,7 @@ export default function ConfirmationPage() {
             color="primary"
             variant="flat"
             className="w-full"
-            onClick={() => window.location.href = `https://wa.me/${booking.guest_phone.replace(/[^0-9]/g, '')}`}
+            onClick={() => window.location.href = `https://wa.me/${CHATBOT_NUMBER}`}
           >
             Contact via WhatsApp
           </Button>
