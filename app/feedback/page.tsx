@@ -4,7 +4,7 @@ import { Card, CardBody, Button, Textarea } from "@nextui-org/react";
 import { Star, Send, SmilePlus } from "lucide-react";
 import { button as buttonStyles } from "@nextui-org/theme";
 import { useSearchParams } from "next/navigation";
-import { API_URLS } from "@/utils/constants";
+import { API_URLS, CHATBOT_NUMBER } from "@/utils/constants";
 
 const FeedbackPage = () => {
   const searchParams = useSearchParams();
@@ -80,7 +80,7 @@ const FeedbackPage = () => {
   };
 
   const handleCloseApp = () => {
-    window.location.href = "https://wa.me/";
+    window.location.href = `https://wa.me/${CHATBOT_NUMBER}`;
   };
 
   if (!feedbackToken || error) {
