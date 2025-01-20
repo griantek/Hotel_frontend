@@ -247,21 +247,39 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     };
 
     const handleUpdateBooking = async () => {
-        try {
-          const token = localStorage.getItem('adminToken');
-          await axios.patch(
-            `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
-            updatedBooking,
-            {
-              headers: { Authorization: `Bearer ${token}` }
+      try {
+        if (updatedBooking.check_in_date && updatedBooking.check_out_date) {
+          if (!validateDates(updatedBooking.check_in_date, updatedBooking.check_out_date)) {
+            setError('Invalid date range');
+            return;
+          }
+        }
+    
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          router.push('/admin/login');
+          return;
+        }
+    
+        const response = await axios.patch(
+          `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
+          updatedBooking,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
-          );
+          }
+        );
+    
+        if (response.data.message === 'Booking updated successfully') {
           setIsUpdateModalOpen(false);
           await fetchBooking();
-        } catch (err) {
-          setError('Failed to update booking');
         }
-      };
+      } catch (err: any) {
+        setError(err.response?.data?.error || 'Failed to update booking');
+      }
+    };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
