@@ -1,11 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Card, CardBody, Button, Textarea } from "@nextui-org/react";
 import { Star, Send, SmilePlus } from "lucide-react";
 import { button as buttonStyles } from "@nextui-org/theme";
 import { useSearchParams } from "next/navigation";
-import { API_URLS, CHATBOT_NUMBER } from "@/utils/constants";
-
 
 const FeedbackPage = () => {
   const searchParams = useSearchParams();
@@ -15,17 +13,19 @@ const FeedbackPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-//   const chatNo = searchParams.get("chatbotNo") || undefined;
-const appointmentId = searchParams.get("id") || undefined;
+  const bookingId = searchParams.get("id") || undefined;
 
   const submitFeedback = async () => {
-    if (!rating || !appointmentId) return;
+    if (!rating || !bookingId) {
+      setError("Rating and booking ID are required.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_URLS.BACKEND_URL}/feedback`, {
+      const response = await fetch(`/api/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -33,7 +33,7 @@ const appointmentId = searchParams.get("id") || undefined;
         body: JSON.stringify({
           rating,
           feedback,
-          appointmentId
+          bookingId,
         }),
       });
 
@@ -41,28 +41,26 @@ const appointmentId = searchParams.get("id") || undefined;
         setIsSubmitted(true);
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Failed to submit feedback.');
+        setError(errorData.message || "Failed to submit feedback.");
       }
     } catch (error) {
       console.error("Error submitting feedback:", error);
-      setError('An error occurred while submitting feedback.');
+      setError("An error occurred while submitting feedback.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCloseApp = () => {
-    if (CHATBOT_NUMBER) {
-      window.location.href = `https://wa.me/${CHATBOT_NUMBER}`;
-    }
+    window.location.href = "https://wa.me/";
   };
 
-  if (!appointmentId) {
+  if (!bookingId) {
     return (
       <Card className="m-4 max-w-md bg-default-50 shadow-sm mx-auto">
         <CardBody>
           <div className="text-center text-danger">
-            Invalid appointment. Please try again with a valid appointment.
+            Invalid booking ID. Please try again with a valid booking.
           </div>
         </CardBody>
       </Card>
@@ -71,13 +69,13 @@ const appointmentId = searchParams.get("id") || undefined;
 
   if (isSubmitted) {
     return (
-      <Card className="m-4 max-w-md bg-default-50 shadow-sm ">
+      <Card className="m-4 max-w-md bg-default-50 shadow-sm">
         <CardBody>
           <div className="flex flex-col items-center space-y-4 py-8">
             <SmilePlus className="text-success-500" size={48} />
             <h2 className="text-xl font-semibold text-default-700">Thank You!</h2>
             <p className="text-center text-default-600">
-              We appreciate your valuable feedback. It helps us improve our services.
+              Your feedback has been submitted successfully. Thank you for helping us improve!
             </p>
             <Button
               onPress={handleCloseApp}
@@ -103,7 +101,7 @@ const appointmentId = searchParams.get("id") || undefined;
           {/* Header */}
           <div className="text-center space-y-2">
             <h2 className="text-xl font-semibold text-default-700">Share Your Experience</h2>
-            <p className="text-default-500">We'd love to hear your thoughts!</p>
+            <p className="text-default-500">We value your feedback and suggestions!</p>
           </div>
 
           {/* Star Rating */}
@@ -134,14 +132,12 @@ const appointmentId = searchParams.get("id") || undefined;
             onValueChange={setFeedback}
             minRows={3}
             classNames={{
-              label: "text-default-700 font-medium"
+              label: "text-default-700 font-medium",
             }}
           />
 
           {/* Error Message */}
-          {error && (
-            <p className="text-danger text-center text-sm">{error}</p>
-          )}
+          {error && <p className="text-danger text-center text-sm">{error}</p>}
 
           {/* Submit Button */}
           <Button
