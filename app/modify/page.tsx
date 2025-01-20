@@ -18,6 +18,10 @@ import {
   Chip
 } from "@nextui-org/react";
 import { API_URLS } from "@/utils/constants";
+interface RoomType {
+  type: string;
+  price: number;
+}
 
 interface FormData {
   name: string;
@@ -57,6 +61,20 @@ export default function ModifyBooking() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/api/room-types`);
+        setRoomTypes(response.data);
+      } catch (error) {
+        console.error('Failed to fetch room types:', error);
+      }
+    };
+  
+    fetchRoomTypes();
+  }, []);
 
   // Add validation effect
   useEffect(() => {
@@ -99,22 +117,17 @@ export default function ModifyBooking() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const roomTypes = [
-    { label: "Single Room", value: "Single Room" },
-    { label: "Double Room", value: "Double Room" },
-    { label: "Suite", value: "Suite" }
-  ];
-
   useEffect(() => {
     const fetchBooking = async () => {
       try {
         const response = await axios.get<BookingResponse>(`${API_URLS.BACKEND_URL}/api/bookings/${bookingId}`);
         const booking = response.data;
+        console.log('Booking data:', booking); // Debug log
         
         setFormData({
           name: booking.guest_name,
           phone: booking.guest_phone,
-          roomType: booking.room_type,
+          roomType: booking.room_type, // Verify this value
           checkInDate: booking.check_in_date,
           checkInTime: booking.check_in_time,
           checkOutDate: booking.check_out_date,
@@ -219,20 +232,27 @@ export default function ModifyBooking() {
         <CardBody>
           <h1 className="text-2xl font-bold mb-6 text-center">Modify Booking</h1>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Select
-              label="Room Type"
-              placeholder="Select room type"
-              value={formData.roomType}
-              onChange={(e) => handleChange({ target: { name: 'roomType', value: e.target.value } })}
-              errorMessage={errors.roomType}
-              isRequired
-            >
-              {roomTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </Select>
+          <Select
+            label="Room Type"
+            selectedKeys={new Set([formData.roomType])}
+            onSelectionChange={(keys) => {
+              const selectedRoom = Array.from(keys)[0] as string;
+              setFormData(prev => ({
+                ...prev,
+                roomType: selectedRoom
+              }));
+            }}
+            className="w-full"
+          >
+            {roomTypes.map((room) => (
+              <SelectItem 
+                key={room.type}
+                value={room.type}
+              >
+                {room.type} (${room.price}/night)
+              </SelectItem>
+            ))}
+          </Select>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
