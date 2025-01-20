@@ -51,6 +51,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   const [roomNumber, setRoomNumber] = useState('');
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [roomTypes, setRoomTypes] = useState<Array<{type: string, price: number}>>([]);
   const [updatedBooking, setUpdatedBooking] = useState<Partial<Booking>>({
     room_type: '',
     check_in_date: '',
@@ -230,6 +231,20 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     }
   };
 
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/api/room-types`);
+        setRoomTypes(response.data);
+      } catch (error) {
+        console.error('Failed to fetch room types:', error);
+      }
+    };
+  
+    fetchRoomTypes();
+  }, []);
+  
+
   // Add new handlers
     const handleCancelBooking = async () => {
         try {
@@ -273,13 +288,35 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
         );
     
         if (response.data.message === 'Booking updated successfully') {
+          await fetchBooking(); // Refresh booking data
+          // Only close modal if no errors
           setIsUpdateModalOpen(false);
-          await fetchBooking();
         }
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to update booking');
+        // Don't close modal on error
       }
     };
+
+    // Update the Select component to prevent auto-closing
+    <Select
+  label="Room Type"
+  selectedKeys={[updatedBooking.room_type || '']}
+  onChange={(e) => {
+    e.preventDefault();
+    setUpdatedBooking({
+      ...updatedBooking,
+      room_type: e.target.value
+    });
+  }}
+  className="w-full"
+>
+  {roomTypes.map((room) => (
+    <SelectItem key={room.type} value={room.type}>
+      {room.type} (${room.price}/night)
+    </SelectItem>
+  ))}
+</Select>
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
