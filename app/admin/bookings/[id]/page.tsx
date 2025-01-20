@@ -300,23 +300,28 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
 
     // Update the Select component to prevent auto-closing
     <Select
-  label="Room Type"
-  selectedKeys={[updatedBooking.room_type || '']}
-  onChange={(e) => {
-    e.preventDefault();
-    setUpdatedBooking({
-      ...updatedBooking,
-      room_type: e.target.value
-    });
-  }}
-  className="w-full"
->
-  {roomTypes.map((room) => (
-    <SelectItem key={room.type} value={room.type}>
-      {room.type} (${room.price}/night)
-    </SelectItem>
-  ))}
-</Select>
+    label="Room Type"
+    selectedKeys={new Set([updatedBooking.room_type || ''])}
+    onSelectionChange={(keys) => {
+      const value = Array.from(keys)[0] as string;
+      setUpdatedBooking(prev => ({
+        ...prev,
+        room_type: value
+      }));
+    }}
+    disallowEmptySelection
+    className="w-full"
+  >
+    {roomTypes.map((room) => (
+      <SelectItem 
+        key={room.type} 
+        value={room.type}
+        textValue={room.type}
+      >
+        {room.type} (${room.price}/night)
+      </SelectItem>
+    ))}
+  </Select>
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
