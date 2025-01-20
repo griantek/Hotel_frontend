@@ -4,7 +4,7 @@ import { Card, CardBody, Button, Textarea } from "@nextui-org/react";
 import { Star, Send, SmilePlus } from "lucide-react";
 import { button as buttonStyles } from "@nextui-org/theme";
 import { useSearchParams } from "next/navigation";
-
+import { API_URLS } from "@/utils/constants";
 const FeedbackPage = () => {
   const searchParams = useSearchParams();
   const [rating, setRating] = useState<number | null>(null);
@@ -25,7 +25,7 @@ const FeedbackPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/feedback`, {
+      const response = await fetch(`${API_URLS.BACKEND_URL}/api/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
