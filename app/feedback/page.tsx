@@ -1,10 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardBody, Button, Textarea } from "@nextui-org/react";
 import { Star, Send, SmilePlus } from "lucide-react";
 import { button as buttonStyles } from "@nextui-org/theme";
 import { useSearchParams } from "next/navigation";
 import { API_URLS } from "@/utils/constants";
+
 const FeedbackPage = () => {
   const searchParams = useSearchParams();
   const [rating, setRating] = useState<number | null>(null);
@@ -12,8 +13,35 @@ const FeedbackPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
-  const bookingId = searchParams.get("id") || undefined;
+  const feedbackToken = searchParams.get("id") || undefined;
+
+  // Validate token and retrieve bookingId
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!feedbackToken) {
+        setError("Invalid feedback token.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URLS.BACKEND_URL}/validate-token?token=${feedbackToken}`);
+        if (response.ok) {
+          const data = await response.json();
+          setBookingId(data.bookingId);
+        } else {
+          const errorData = await response.json();
+          setError(errorData.error || "Invalid or expired feedback token.");
+        }
+      } catch (error) {
+        console.error("Error validating token:", error);
+        setError("An error occurred while validating the feedback token.");
+      }
+    };
+
+    validateToken();
+  }, [feedbackToken]);
 
   const submitFeedback = async () => {
     if (!rating || !bookingId) {
@@ -55,12 +83,12 @@ const FeedbackPage = () => {
     window.location.href = "https://wa.me/";
   };
 
-  if (!bookingId) {
+  if (!feedbackToken || error) {
     return (
       <Card className="m-4 max-w-md bg-default-50 shadow-sm mx-auto">
         <CardBody>
           <div className="text-center text-danger">
-            Invalid booking ID. Please try again with a valid booking.
+            {error || "Invalid feedback token. Please try again with a valid link."}
           </div>
         </CardBody>
       </Card>
