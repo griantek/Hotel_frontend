@@ -211,7 +211,7 @@ export default function BookingPage() {
             >
               {roomTypes.map((type) => (
                 <SelectItem key={type.type} value={type.type}>
-                  {`${type.type} - $${type.price.toFixed(2)}`}
+                  {`${type.type}`}
                 </SelectItem>
               ))}
             </Select>
