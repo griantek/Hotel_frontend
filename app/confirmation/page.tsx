@@ -47,17 +47,30 @@ export default function ConfirmationPage() {
     }
   }, [bookingId]);
 
-  // Prevent navigation back to the previous page
+  // Block back navigation
   useEffect(() => {
-    window.history.replaceState(null, '', window.location.href);
     const preventBack = () => {
       window.history.pushState(null, '', window.location.href);
     };
+
+    window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', preventBack);
+
     return () => {
       window.removeEventListener('popstate', preventBack);
     };
   }, []);
+
+  const formatDateTime = (date: string, time: string) => {
+    const datetime = new Date(`${date}T${time}`);
+    return datetime.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   if (isLoading) {
     return (
@@ -78,17 +91,6 @@ export default function ConfirmationPage() {
       </div>
     );
   }
-
-  const formatDateTime = (date: string, time: string) => {
-    const datetime = new Date(`${date}T${time}`);
-    return datetime.toLocaleString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <div className="max-w-md mx-auto p-4">
