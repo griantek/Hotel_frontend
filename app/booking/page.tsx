@@ -167,13 +167,12 @@ export default function BookingPage() {
               isRequired
             />
 
-            <Input
-              label="Phone"
-              placeholder="Enter your phone number"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              isRequired
-            />
+            <input
+                type="hidden"
+                name="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+              />
 
             <Select
               label="Room Type"
