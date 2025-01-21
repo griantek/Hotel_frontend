@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardBody, Input, Button, Select, SelectItem, Chip, Divider } from "@nextui-org/react";
+import { Card, CardBody, Input, Button, Select, SelectItem, Chip, Divider, Skeleton } from "@nextui-org/react";
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
@@ -27,7 +27,7 @@ interface Availability {
 
 export default function BookingPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [availability, setAvailability] = useState<Availability | null>(null);
@@ -147,6 +147,20 @@ export default function BookingPage() {
       setIsLoading(false);
     }
   };
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Card>
+          <CardBody>
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-10 w-full mb-4" />
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
