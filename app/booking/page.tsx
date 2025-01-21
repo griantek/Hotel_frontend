@@ -39,7 +39,6 @@ export default function BookingPage() {
   const searchParams = useSearchParams();
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get('token');
-  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -96,23 +95,19 @@ export default function BookingPage() {
   }, []);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [field]: value,
+      [field]: value
     }));
-    setTouched((prev) => ({
+    setErrors(prev => ({
       ...prev,
-      [field]: true, // Mark this field as touched
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      [field]: undefined,
+      [field]: undefined
     }));
   };
-  const validateForm = (showAllErrors = false) => {
+  const validateForm = () => {
     const newErrors: Partial<FormData> = {};
     const currentDate = new Date().toISOString().split('T')[0];
-  
+
     if (!formData.roomType) newErrors.roomType = "Room type is required";
     if (!formData.checkInDate) newErrors.checkInDate = "Check-in date is required";
     if (!formData.checkOutDate) newErrors.checkOutDate = "Check-out date is required";
@@ -120,16 +115,7 @@ export default function BookingPage() {
     if (formData.checkOutDate <= formData.checkInDate) {
       newErrors.checkOutDate = "Check-out date must be after check-in date";
     }
-  
-    if (showAllErrors) {
-      setTouched((prev) =>
-        Object.keys(formData).reduce(
-          (acc, field) => ({ ...acc, [field]: true }),
-          prev
-        )
-      );
-    }
-  
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -157,14 +143,10 @@ export default function BookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
-  
-    // Validate the form and show all errors on submission
-    if (!validateForm(true)) {
-      return;
-    }
-  
     setIsLoading(true);
+    setMessage('');
+    if (!validateForm() || !availability?.available) return;
+
     try {
       const response = await axios.post(`${API_URLS.BACKEND_URL}/api/bookings`, formData);
       if (response.data) {
@@ -224,8 +206,7 @@ export default function BookingPage() {
               placeholder="Select room type"
               value={formData.roomType}
               onChange={(e) => handleInputChange("roomType", e.target.value)}
-              validationState={touched.roomType && errors.roomType ? "invalid" : undefined}
-              errorMessage={touched.roomType && errors.roomType ? errors.roomType : undefined}
+              errorMessage={errors.roomType}
               isRequired
             >
               {roomTypes.map((type) => (
@@ -236,16 +217,15 @@ export default function BookingPage() {
             </Select>
 
             <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="date"
-              min={new Date().toISOString().split('T')[0]}
-              label="Check-in Date"
-              value={formData.checkInDate}
-              onChange={(e) => handleInputChange("checkInDate", e.target.value)}
-              validationState={touched.checkInDate && errors.checkInDate ? "invalid" : undefined}
-              errorMessage={touched.checkInDate && errors.checkInDate ? errors.checkInDate : undefined}
-              isRequired
-            />
+              <Input
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                label="Check-in Date"
+                value={formData.checkInDate}
+                onChange={(e) => handleInputChange("checkInDate", e.target.value)}
+                errorMessage={errors.checkInDate}
+                isRequired
+              />
               <Input
                 type="time"
                 label="Check-in Time"
@@ -262,9 +242,7 @@ export default function BookingPage() {
                 label="Check-out Date"
                 value={formData.checkOutDate}
                 onChange={(e) => handleInputChange("checkOutDate", e.target.value)}
-                validationState={touched.checkOutDate && errors.checkOutDate ? "invalid" : undefined}
-                errorMessage={touched.checkOutDate && errors.checkOutDate ? errors.checkOutDate : undefined}
-                
+                errorMessage={errors.roomType}
                 isRequired
               />
               <Input
