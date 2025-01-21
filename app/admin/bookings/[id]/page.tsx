@@ -184,21 +184,28 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const handleStatusUpdate = async (updateData: Partial<Booking>) => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      await axios.patch(
-        `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
-        updateData,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      await fetchBooking();
-    } catch (err) {
-      setError('Failed to update booking');
-    }
-  };
+ // Add loading state for actions
+const [isActionLoading, setIsActionLoading] = useState(false);
+
+// Update handleStatusUpdate with loading state
+const handleStatusUpdate = async (updateData: Partial<Booking>) => {
+  setIsActionLoading(true);
+  try {
+    const token = localStorage.getItem('adminToken');
+    await axios.patch(
+      `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
+      updateData,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    await fetchBooking();
+  } catch (err) {
+    setError('Failed to update booking');
+  } finally {
+    setIsActionLoading(false);
+  }
+};
 
   const handleSendReminder = async () => {
     try {
@@ -526,17 +533,25 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
             <ModalHeader>Update Booking</ModalHeader>
             <ModalBody>
               <div className="space-y-4">
-                <Select
+              <Select
                   label="Room Type"
-                  selectedKeys={[updatedBooking.room_type || booking.room_type]}
-                  onChange={(e) => setUpdatedBooking({
-                    ...updatedBooking,
-                    room_type: e.target.value
-                  })}
+                  selectedKeys={new Set([updatedBooking.room_type || booking?.room_type || ''])}
+                  onSelectionChange={(keys) => {
+                    const selectedType = Array.from(keys)[0]?.toString() || '';
+                    setUpdatedBooking(prev => ({
+                      ...prev,
+                      room_type: selectedType
+                    }));
+                  }}
                 >
-                  <SelectItem key="Single Room" value="Single Room">Single Room</SelectItem>
-                  <SelectItem key="Double Room" value="Double Room">Double Room</SelectItem>
-                  <SelectItem key="Suite" value="Suite">Suite</SelectItem>
+                  {roomTypes.map((room) => (
+                    <SelectItem 
+                      key={room.type}
+                      value={room.type}
+                    >
+                      {room.type} (${room.price}/night)
+                    </SelectItem>
+                  ))}
                 </Select>
 
                 <div className="grid grid-cols-2 gap-4">
