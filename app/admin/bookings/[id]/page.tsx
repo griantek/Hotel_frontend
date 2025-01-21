@@ -530,13 +530,15 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               <div className="space-y-4">
               <Select
                 label="Room Type"
-                selectedKeys={new Set([updatedBooking.room_type || booking?.room_type || ''])}
+                selectedKeys={updatedBooking.room_type ? [updatedBooking.room_type] : booking?.room_type ? [booking.room_type] : []}
                 onSelectionChange={(keys) => {
-                  const selectedType = Array.from(keys)[0]?.toString() || '';
-                  setUpdatedBooking(prev => ({
-                    ...prev,
-                    room_type: selectedType
-                  }));
+                  const selectedType = Array.from(keys)[0]?.toString();
+                  if (selectedType) {
+                    setUpdatedBooking(prev => ({
+                      ...prev,
+                      room_type: selectedType
+                    }));
+                  }
                 }}
                 className="w-full"
                 disallowEmptySelection
@@ -549,7 +551,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
                     {room.type} (${room.price}/night)
                   </SelectItem>
                 ))}
-              </Select>
+                </Select>
 
                 <div className="grid grid-cols-2 gap-4">
                   <Input
