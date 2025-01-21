@@ -117,7 +117,7 @@ export default function ModifyBooking() {
 
   const [availability, setAvailability] = useState<RoomAvailability | null>(null);
   const [errors, setErrors] = useState<Partial<FormData>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
