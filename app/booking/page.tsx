@@ -107,15 +107,41 @@ export default function BookingPage() {
   const validateForm = () => {
     const newErrors: Partial<FormData> = {};
     const currentDate = new Date().toISOString().split('T')[0];
-
-    if (!formData.roomType) newErrors.roomType = "Room type is required";
-    if (!formData.checkInDate) newErrors.checkInDate = "Check-in date is required";
-    if (!formData.checkOutDate) newErrors.checkOutDate = "Check-out date is required";
-    if (formData.checkInDate < currentDate) newErrors.checkInDate = "Check-in date cannot be in the past";
-    if (formData.checkOutDate <= formData.checkInDate) {
+  
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+  
+    // Phone validation (if needed - currently hidden but validated)
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    }
+  
+    // Room type validation
+    if (!formData.roomType) {
+      newErrors.roomType = "Room type is required";
+    }
+  
+    // Check-in date validation
+    if (!formData.checkInDate) {
+      newErrors.checkInDate = "Check-in date is required";
+    } else if (formData.checkInDate < currentDate) {
+      newErrors.checkInDate = "Check-in date cannot be in the past";
+    }
+  
+    // Check-out date validation
+    if (!formData.checkOutDate) {
+      newErrors.checkOutDate = "Check-out date is required";
+    } else if (formData.checkOutDate <= formData.checkInDate) {
       newErrors.checkOutDate = "Check-out date must be after check-in date";
     }
-
+  
+    // Guest count validation
+    if (!formData.guestCount || formData.guestCount < 1) {
+      newErrors.guestCount = "At least 1 guest is required";
+    }
+  
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
