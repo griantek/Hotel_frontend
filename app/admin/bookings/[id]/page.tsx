@@ -51,6 +51,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   const [roomNumber, setRoomNumber] = useState('');
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [roomTypes, setRoomTypes] = useState<Array<{type: string, price: number}>>([]);
   const [updatedBooking, setUpdatedBooking] = useState<Partial<Booking>>({
     room_type: '',
@@ -243,7 +244,43 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   
     fetchRoomTypes();
   }, []);
+  const handleUpdateBooking = async () => {
+    setIsUpdating(true);
+    try {
+      if (updatedBooking.check_in_date && updatedBooking.check_out_date) {
+        if (!validateDates(updatedBooking.check_in_date, updatedBooking.check_out_date)) {
+          setError('Invalid date range');
+          return;
+        }
+      }
   
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.push('/admin/login');
+        return;
+      }
+  
+      const response = await axios.patch(
+        `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
+        updatedBooking,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      if (response.data.message === 'Booking updated successfully') {
+        await fetchBooking();
+        setIsUpdateModalOpen(false);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update booking');
+    } finally {
+      setIsUpdating(false);
+    }
+  }
 
   // Add new handlers
     const handleCancelBooking = async () => {
@@ -261,42 +298,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const handleUpdateBooking = async () => {
-      try {
-        if (updatedBooking.check_in_date && updatedBooking.check_out_date) {
-          if (!validateDates(updatedBooking.check_in_date, updatedBooking.check_out_date)) {
-            setError('Invalid date range');
-            return;
-          }
-        }
     
-        const token = localStorage.getItem('adminToken');
-        if (!token) {
-          router.push('/admin/login');
-          return;
-        }
-    
-        const response = await axios.patch(
-          `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
-          updatedBooking,
-          {
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-    
-        if (response.data.message === 'Booking updated successfully') {
-          await fetchBooking(); // Refresh booking data
-          // Only close modal if no errors
-          setIsUpdateModalOpen(false);
-        }
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to update booking');
-        // Don't close modal on error
-      }
-    };
 
     // Update the Select component to prevent auto-closing
     <Select
@@ -521,31 +523,33 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
         <Modal 
           isOpen={isUpdateModalOpen} 
           onClose={() => setIsUpdateModalOpen(false)}
+          isDismissable={false}
         >
           <ModalContent>
             <ModalHeader>Update Booking</ModalHeader>
             <ModalBody>
               <div className="space-y-4">
               <Select
-                  label="Room Type"
-                  selectedKeys={new Set([updatedBooking.room_type || booking?.room_type || ''])}
-                  onSelectionChange={(keys) => {
-                    const selectedType = Array.from(keys)[0]?.toString() || '';
-                    setUpdatedBooking(prev => ({
-                      ...prev,
-                      room_type: selectedType
-                    }));
-                  }}
-                >
-                  {roomTypes.map((room) => (
-                    <SelectItem 
-                      key={room.type}
-                      value={room.type}
-                    >
-                      {room.type} (${room.price}/night)
-                    </SelectItem>
-                  ))}
-                </Select>
+                label="Room Type"
+                selectedKeys={[updatedBooking.room_type || booking?.room_type || '']}
+                onChange={(e) => {
+                  e.preventDefault(); // Prevent default form submission
+                  setUpdatedBooking(prev => ({
+                    ...prev,
+                    room_type: e.target.value
+                  }));
+                }}
+                className="w-full"
+              >
+                {roomTypes.map((room) => (
+                  <SelectItem 
+                    key={room.type}
+                    value={room.type}
+                  >
+                    {room.type} (${room.price}/night)
+                  </SelectItem>
+                ))}
+              </Select>
 
                 <div className="grid grid-cols-2 gap-4">
                   <Input
@@ -640,13 +644,17 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               </div>
             </ModalBody>
             <ModalFooter>
-              <Button color="default" onPress={() => setIsUpdateModalOpen(false)}>
+              <Button color="default" 
+              onPress={() => setIsUpdateModalOpen(false)}
+              isDisabled={isUpdating}
+              >
                 Close
               </Button>
               <Button 
                 color="primary" 
                 onPress={handleUpdateBooking}
-                isDisabled={!availability?.available}
+                isDisabled={!availability?.available || isUpdating}
+                isLoading={isUpdating}
               >
                 Save Changes
               </Button>
