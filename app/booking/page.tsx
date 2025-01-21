@@ -39,6 +39,7 @@ export default function BookingPage() {
   const searchParams = useSearchParams();
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get('token');
+  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -95,16 +96,20 @@ export default function BookingPage() {
   }, []);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    setErrors(prev => ({
+    setTouched((prev) => ({
       ...prev,
-      [field]: undefined
+      [field]: true, // Mark this field as touched
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      [field]: undefined,
     }));
   };
-  const validateForm = () => {
+  const validateForm = (showAllErrors = false) => {
     const newErrors: Partial<FormData> = {};
     const currentDate = new Date().toISOString().split('T')[0];
   
@@ -116,8 +121,17 @@ export default function BookingPage() {
       newErrors.checkOutDate = "Check-out date must be after check-in date";
     }
   
-    setErrors(newErrors); // Set errors in state
-    return Object.keys(newErrors).length === 0; // Return true if no errors
+    if (showAllErrors) {
+      setTouched((prev) =>
+        Object.keys(formData).reduce(
+          (acc, field) => ({ ...acc, [field]: true }),
+          prev
+        )
+      );
+    }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   useEffect(() => {
@@ -144,14 +158,13 @@ export default function BookingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
-    
-    // Validate form and stop submission if invalid
-    if (!validateForm()) {
+  
+    // Validate the form and show all errors on submission
+    if (!validateForm(true)) {
       return;
     }
   
     setIsLoading(true);
-  
     try {
       const response = await axios.post(`${API_URLS.BACKEND_URL}/api/bookings`, formData);
       if (response.data) {
@@ -211,7 +224,8 @@ export default function BookingPage() {
               placeholder="Select room type"
               value={formData.roomType}
               onChange={(e) => handleInputChange("roomType", e.target.value)}
-              errorMessage={errors.roomType}
+              validationState={touched.roomType && errors.roomType ? "invalid" : undefined}
+              errorMessage={touched.roomType && errors.roomType ? errors.roomType : undefined}
               isRequired
             >
               {roomTypes.map((type) => (
@@ -228,8 +242,8 @@ export default function BookingPage() {
               label="Check-in Date"
               value={formData.checkInDate}
               onChange={(e) => handleInputChange("checkInDate", e.target.value)}
-              isInvalid={!!errors.checkInDate}
-              errorMessage={errors.checkInDate}
+              validationState={touched.checkInDate && errors.checkInDate ? "invalid" : undefined}
+              errorMessage={touched.checkInDate && errors.checkInDate ? errors.checkInDate : undefined}
               isRequired
             />
               <Input
@@ -248,8 +262,9 @@ export default function BookingPage() {
                 label="Check-out Date"
                 value={formData.checkOutDate}
                 onChange={(e) => handleInputChange("checkOutDate", e.target.value)}
-                isInvalid={!!errors.checkInDate}
-                errorMessage={errors.roomType}
+                validationState={touched.checkOutDate && errors.checkOutDate ? "invalid" : undefined}
+                errorMessage={touched.checkOutDate && errors.checkOutDate ? errors.checkOutDate : undefined}
+                
                 isRequired
               />
               <Input
