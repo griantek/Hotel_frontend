@@ -104,20 +104,36 @@ export default function BookingPage() {
       [field]: undefined
     }));
   };
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
     const currentDate = new Date().toISOString().split('T')[0];
-
-    if (!formData.roomType) newErrors.roomType = "Room type is required";
-    if (!formData.checkInDate) newErrors.checkInDate = "Check-in date is required";
-    if (!formData.checkOutDate) newErrors.checkOutDate = "Check-out date is required";
-    if (formData.checkInDate < currentDate) newErrors.checkInDate = "Check-in date cannot be in the past";
-    if (formData.checkOutDate <= formData.checkInDate) {
+  
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+  
+    if (!formData.roomType) {
+      newErrors.roomType = "Room type is required";
+    }
+  
+    if (!formData.checkInDate) {
+      newErrors.checkInDate = "Check-in date is required";
+    } else if (formData.checkInDate < currentDate) {
+      newErrors.checkInDate = "Check-in date cannot be in the past";
+    }
+  
+    if (!formData.checkOutDate) {
+      newErrors.checkOutDate = "Check-out date is required";
+    } else if (formData.checkOutDate <= formData.checkInDate) {
       newErrors.checkOutDate = "Check-out date must be after check-in date";
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    }
+  
+    return true;
   };
 
   useEffect(() => {
@@ -143,19 +159,24 @@ export default function BookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({}); // Reset errors on submission attempt
+  
+    if (!validateForm()) {
+      return; // Stop submission if validation fails
+    }
+  
     setIsLoading(true);
-    setMessage('');
-    if (!validateForm() || !availability?.available) return;
-
+    setMessage("");
+  
     try {
       const response = await axios.post(`${API_URLS.BACKEND_URL}/api/bookings`, formData);
       if (response.data) {
-        setMessage('Booking successful!');
+        setMessage("Booking successful!");
         router.push(`/confirmation?id=${response.data.bookingId}`);
       }
     } catch (error) {
-      setMessage('Failed to create booking. Please try again.');
-      console.error('Booking failed:', error);
+      setMessage("Failed to create booking. Please try again.");
+      console.error("Booking failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -191,6 +212,8 @@ export default function BookingPage() {
               placeholder="Enter your name"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
+              isInvalid={!!errors.name}
+              errorMessage={errors.name}
               isRequired
             />
 
@@ -206,6 +229,7 @@ export default function BookingPage() {
               placeholder="Select room type"
               value={formData.roomType}
               onChange={(e) => handleInputChange("roomType", e.target.value)}
+              isInvalid={!!errors.roomType}
               errorMessage={errors.roomType}
               isRequired
             >
@@ -223,6 +247,7 @@ export default function BookingPage() {
                 label="Check-in Date"
                 value={formData.checkInDate}
                 onChange={(e) => handleInputChange("checkInDate", e.target.value)}
+                isInvalid={!!errors.checkInDate}
                 errorMessage={errors.checkInDate}
                 isRequired
               />
@@ -242,7 +267,8 @@ export default function BookingPage() {
                 label="Check-out Date"
                 value={formData.checkOutDate}
                 onChange={(e) => handleInputChange("checkOutDate", e.target.value)}
-                errorMessage={errors.roomType}
+                isInvalid={!!errors.checkOutDate}
+                errorMessage={errors.checkOutDate}
                 isRequired
               />
               <Input
