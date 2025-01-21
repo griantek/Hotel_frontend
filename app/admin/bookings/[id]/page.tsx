@@ -522,7 +522,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
         <Modal 
           isOpen={isUpdateModalOpen} 
           onClose={() => setIsUpdateModalOpen(false)}
-          //isDismissable={false}
+          isDismissable={false}
         >
           <ModalContent>
             <ModalHeader>Update Booking</ModalHeader>
