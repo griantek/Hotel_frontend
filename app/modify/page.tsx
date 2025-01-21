@@ -281,6 +281,7 @@ export default function ModifyBooking() {
                 <Input
                   type="date"
                   label="Check-in Date"
+                  min={new Date().toISOString().split('T')[0]}
                   name="checkInDate"
                   value={formData.checkInDate}
                   onChange={handleChange}
@@ -305,6 +306,7 @@ export default function ModifyBooking() {
                 <Input
                   type="date"
                   label="Check-out Date"
+                  min={ formData.checkInDate || new Date().toISOString().split('T')[0]}
                   name="checkOutDate"
                   value={formData.checkOutDate}
                   onChange={handleChange}
