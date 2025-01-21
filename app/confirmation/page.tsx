@@ -47,17 +47,18 @@ export default function ConfirmationPage() {
     }
   }, [bookingId]);
 
-  // Block back navigation
+  // Redirect user to WhatsApp on back navigation
   useEffect(() => {
-    const preventBack = () => {
-      window.history.pushState(null, '', window.location.href);
+    const redirectToWhatsApp = () => {
+      window.location.href = `https://wa.me/${CHATBOT_NUMBER}`;
     };
 
+    // Push the current URL to prevent direct navigation
     window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', preventBack);
+    window.addEventListener('popstate', redirectToWhatsApp);
 
     return () => {
-      window.removeEventListener('popstate', preventBack);
+      window.removeEventListener('popstate', redirectToWhatsApp);
     };
   }, []);
 
