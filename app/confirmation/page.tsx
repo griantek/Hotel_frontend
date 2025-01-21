@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Card, CardBody, Button, Skeleton } from "@nextui-org/react";
 import { CheckCircle } from "lucide-react";
 import { API_URLS, CHATBOT_NUMBER } from "@/utils/constants";
+
 interface BookingDetails {
   id: number;
   room_type: string;
@@ -46,10 +47,22 @@ export default function ConfirmationPage() {
     }
   }, [bookingId]);
 
+  // Prevent navigation back to the previous page
+  useEffect(() => {
+    window.history.replaceState(null, '', window.location.href);
+    const preventBack = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', preventBack);
+    return () => {
+      window.removeEventListener('popstate', preventBack);
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div className="max-w-md mx-auto p-4">
-        <Skeleton className="h-64 rounded-lg"/>
+        <Skeleton className="h-64 rounded-lg" />
       </div>
     );
   }
@@ -73,7 +86,7 @@ export default function ConfirmationPage() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -86,12 +99,12 @@ export default function ConfirmationPage() {
             <h1 className="text-xl font-semibold">Booking Confirmed</h1>
           </div>
 
-            <div className="rounded-lg space-y-3 p-4">
+          <div className="rounded-lg space-y-3 p-4">
             <div>
               <p className="text-sm text-gray-500">Guest</p>
               <p className="font-small">{booking.guest_name}</p>
             </div>
-            
+
             <div>
               <p className="text-sm text-gray-500">Room</p>
               <p className="font-medium">{booking.room_type} • {booking.guest_count} guests</p>
