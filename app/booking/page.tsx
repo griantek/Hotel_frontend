@@ -5,6 +5,11 @@ import { Card, CardBody, Input, Button, Select, SelectItem, Chip, Divider, Skele
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
+interface RoomType {
+  type: string;
+  price: number;
+}
+
 interface FormData {
   name: string;
   phone: string;
@@ -32,6 +37,7 @@ export default function BookingPage() {
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [availability, setAvailability] = useState<Availability | null>(null);
   const searchParams = useSearchParams();
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get('token');
 
   const [formData, setFormData] = useState<FormData>({
@@ -75,11 +81,18 @@ export default function BookingPage() {
     validateToken();
   }, [token, router]);
   
-  const roomTypes = [
-    { label: "Single Room", value: "Single Room" },
-    { label: "Double Room", value: "Double Room" },
-    { label: "Suite", value: "Suite" }
-  ];
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/api/room-types`);
+        setRoomTypes(response.data);
+      } catch (error) {
+        console.error('Failed to fetch room types:', error);
+      }
+    };
+  
+    fetchRoomTypes();
+  }, []);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData(prev => ({
@@ -197,8 +210,8 @@ export default function BookingPage() {
               isRequired
             >
               {roomTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
+                <SelectItem key={type.type} value={type.type}>
+                  {`${type.type} - $${type.price.toFixed(2)}`}
                 </SelectItem>
               ))}
             </Select>
