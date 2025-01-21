@@ -244,43 +244,7 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
   
     fetchRoomTypes();
   }, []);
-  const handleUpdateBooking = async () => {
-    setIsUpdating(true);
-    try {
-      if (updatedBooking.check_in_date && updatedBooking.check_out_date) {
-        if (!validateDates(updatedBooking.check_in_date, updatedBooking.check_out_date)) {
-          setError('Invalid date range');
-          return;
-        }
-      }
   
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        router.push('/admin/login');
-        return;
-      }
-  
-      const response = await axios.patch(
-        `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
-        updatedBooking,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-  
-      if (response.data.message === 'Booking updated successfully') {
-        await fetchBooking();
-        setIsUpdateModalOpen(false);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update booking');
-    } finally {
-      setIsUpdating(false);
-    }
-  }
 
   // Add new handlers
     const handleCancelBooking = async () => {
@@ -298,7 +262,42 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
         }
     };
 
+    const handleUpdateBooking = async () => {
+      try {
+        if (updatedBooking.check_in_date && updatedBooking.check_out_date) {
+          if (!validateDates(updatedBooking.check_in_date, updatedBooking.check_out_date)) {
+            setError('Invalid date range');
+            return;
+          }
+        }
     
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          router.push('/admin/login');
+          return;
+        }
+    
+        const response = await axios.patch(
+          `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
+          updatedBooking,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+    
+        if (response.data.message === 'Booking updated successfully') {
+          await fetchBooking(); // Refresh booking data
+          // Only close modal if no errors
+          setIsUpdateModalOpen(false);
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.error || 'Failed to update booking');
+        // Don't close modal on error
+      }
+    };
 
     // Update the Select component to prevent auto-closing
     <Select
