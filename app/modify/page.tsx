@@ -226,7 +226,21 @@ export default function ModifyBooking() {
       setIsLoading(false);
     }
   };
-  
+  if (isLoading) {
+    // Show skeleton while loading
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardBody>
+            <Skeleton className="h-12 w-full rounded-lg mb-4" />
+            <Skeleton className="h-12 w-full rounded-lg mb-4" />
+            <Skeleton className="h-12 w-full rounded-lg mb-4" />
+            <Skeleton className="h-12 w-full rounded-lg mb-4" />
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
