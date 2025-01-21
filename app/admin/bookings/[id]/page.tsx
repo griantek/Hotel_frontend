@@ -184,28 +184,21 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
     }
   };
 
- // Add loading state for actions
-const [isActionLoading, setIsActionLoading] = useState(false);
-
-// Update handleStatusUpdate with loading state
-const handleStatusUpdate = async (updateData: Partial<Booking>) => {
-  setIsActionLoading(true);
-  try {
-    const token = localStorage.getItem('adminToken');
-    await axios.patch(
-      `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
-      updateData,
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-    await fetchBooking();
-  } catch (err) {
-    setError('Failed to update booking');
-  } finally {
-    setIsActionLoading(false);
-  }
-};
+  const handleStatusUpdate = async (updateData: Partial<Booking>) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.patch(
+        `${API_URLS.BACKEND_URL}/api/admin/bookings/${resolvedParams.id}/update`,
+        updateData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      await fetchBooking();
+    } catch (err) {
+      setError('Failed to update booking');
+    }
+  };
 
   const handleSendReminder = async () => {
     try {
