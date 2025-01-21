@@ -95,45 +95,76 @@ export default function BookingPage() {
   }, []);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    setErrors(prev => ({
-      ...prev,
-      [field]: undefined
-    }));
+  
+    // Dynamic validation for the field being updated
+    setErrors((prevErrors) => {
+      const newErrors = { ...prevErrors };
+  
+      // Validate specific fields
+      if (field === "name" && typeof value === 'string' && !value.trim()) {
+        newErrors.name = "Name is required";
+      } else if (field === "roomType" && !value) {
+        newErrors.roomType = "Room type is required";
+      } else if (field === "checkInDate") {
+        const currentDate = new Date().toISOString().split("T")[0];
+        if (!value) {
+          newErrors.checkInDate = "Check-in date is required";
+        } else if (value < currentDate) {
+          newErrors.checkInDate = "Check-in date cannot be in the past";
+        } else {
+          delete newErrors.checkInDate; // Clear error if valid
+        }
+      } else if (field === "checkOutDate") {
+        if (!value) {
+          newErrors.checkOutDate = "Check-out date is required";
+        } else if (value <= formData.checkInDate) {
+          newErrors.checkOutDate = "Check-out date must be after check-in date";
+        } else {
+          delete newErrors.checkOutDate; // Clear error if valid
+        }
+      } else {
+        delete newErrors[field]; // Clear error for valid input
+      }
+  
+      return newErrors;
+    });
   };
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toISOString().split("T")[0];
   
+    // Validate Name
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
   
+    // Validate Room Type
     if (!formData.roomType) {
       newErrors.roomType = "Room type is required";
     }
   
+    // Validate Check-in Date
     if (!formData.checkInDate) {
       newErrors.checkInDate = "Check-in date is required";
     } else if (formData.checkInDate < currentDate) {
       newErrors.checkInDate = "Check-in date cannot be in the past";
     }
   
+    // Validate Check-out Date
     if (!formData.checkOutDate) {
       newErrors.checkOutDate = "Check-out date is required";
     } else if (formData.checkOutDate <= formData.checkInDate) {
       newErrors.checkOutDate = "Check-out date must be after check-in date";
     }
   
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return false;
-    }
+    setErrors(newErrors); // Update all errors in state
   
-    return true;
+    // Return true if no errors exist
+    return Object.keys(newErrors).length === 0;
   };
 
   useEffect(() => {
