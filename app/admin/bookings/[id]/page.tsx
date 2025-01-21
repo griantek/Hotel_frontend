@@ -530,15 +530,16 @@ export default function BookingDetails({ params }: { params: Promise<{ id: strin
               <div className="space-y-4">
               <Select
                 label="Room Type"
-                selectedKeys={[updatedBooking.room_type || booking?.room_type || '']}
-                onChange={(e) => {
-                  e.preventDefault(); // Prevent default form submission
+                selectedKeys={new Set([updatedBooking.room_type || booking?.room_type || ''])}
+                onSelectionChange={(keys) => {
+                  const selectedType = Array.from(keys)[0]?.toString() || '';
                   setUpdatedBooking(prev => ({
                     ...prev,
-                    room_type: e.target.value
+                    room_type: selectedType
                   }));
                 }}
                 className="w-full"
+                disallowEmptySelection
               >
                 {roomTypes.map((room) => (
                   <SelectItem 
