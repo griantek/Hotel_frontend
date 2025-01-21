@@ -65,11 +65,14 @@ export default function ModifyBooking() {
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
+      setIsLoading(true); // Set loading state to true before fetching
       try {
         const response = await axios.get(`${API_URLS.BACKEND_URL}/api/room-types`);
         setRoomTypes(response.data);
       } catch (error) {
-        console.error('Failed to fetch room types:', error);
+        console.error("Failed to fetch room types:", error);
+      } finally {
+        setIsLoading(false); // Set loading state to false after fetching
       }
     };
   
@@ -119,11 +122,10 @@ export default function ModifyBooking() {
 
   useEffect(() => {
     const fetchBooking = async () => {
+      setIsLoading(true); // Set loading state to true before fetching
       try {
         const response = await axios.get<BookingResponse>(`${API_URLS.BACKEND_URL}/api/bookings/${bookingId}`);
         const booking = response.data;
-        console.log('Room type from API:', booking.room_type); // Debug log
-        
         setFormData(prev => ({
           ...prev,
           name: booking.guest_name,
@@ -137,11 +139,12 @@ export default function ModifyBooking() {
           notes: booking.notes || ""
         }));
       } catch (error) {
-        console.error('Error fetching booking:', error);
+        console.error("Error fetching booking:", error);
+      } finally {
+        setIsLoading(false); // Set loading state to false after fetching
       }
     };
-    
-
+  
     if (bookingId) {
       fetchBooking();
     }
