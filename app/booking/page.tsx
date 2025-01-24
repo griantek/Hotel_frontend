@@ -1,10 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardBody, Input, Button, Select, SelectItem, Chip, Divider, Skeleton } from "@nextui-org/react";
-import axios from 'axios';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardBody,
+  Input,
+  Button,
+  Select,
+  SelectItem,
+  Chip,
+  Divider,
+  Skeleton,
+} from "@nextui-org/react";
+import axios from "axios";
+import { useRouter, useSearchParams } from "next/navigation";
 import { API_URLS } from "@/utils/constants";
+import ErrorNotification from "@/components/ErrorNotification";
+
 interface RoomType {
   type: string;
   price: number;
@@ -33,64 +45,73 @@ interface Availability {
 export default function BookingPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {}
+  );
   const [availability, setAvailability] = useState<Availability | null>(null);
   const searchParams = useSearchParams();
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    phone: '',
-    roomType: '',
-    checkInDate: '',
-    checkInTime: '14:00',
-    checkOutDate: '',
-    checkOutTime: '11:00',
+    name: "",
+    phone: "",
+    roomType: "",
+    checkInDate: "",
+    checkInTime: "14:00",
+    checkOutDate: "",
+    checkOutTime: "11:00",
     guestCount: 1,
-    notes: ''
+    notes: "",
   });
 
   useEffect(() => {
     const validateToken = async () => {
-      if (!token) {
-        router.push("/tokenexp"); // Redirect to home if no token
-        return;
-      }
+      // if (!token) {
+      //   router.push("/tokenexp"); // Redirect to home if no token
+      //   return;
+      // }
 
       try {
-        const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
-          params: { token }
-        });
+        // Simulate backend response
+        const simulatedResponse = {
+          data: {
+            name: "John Doe",
+            phone: "1234567890",
+          },
+        };
 
-        // Update form with validated user data
-        setFormData(prev => ({
+        // Update form with simulated user data
+        setFormData((prev) => ({
           ...prev,
-          name: response.data.name,
-          phone: response.data.phone
+          name: simulatedResponse.data.name,
+          phone: simulatedResponse.data.phone,
         }));
 
         setIsLoading(false);
       } catch (error) {
-        console.error('Token validation failed:', error);
+        console.error("Token validation failed:", error);
         router.push("/tokenexp"); // Redirect to home on invalid token
       }
     };
 
     validateToken();
   }, [token, router]);
-  
+
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
-        const response = await axios.get(`${API_URLS.BACKEND_URL}/api/room-types`);
+        const response = await axios.get(
+          `${API_URLS.BACKEND_URL}/api/room-types`
+        );
         setRoomTypes(response.data);
       } catch (error) {
-        console.error('Failed to fetch room types:', error);
+        console.error("Failed to fetch room types:", error);
       }
     };
-  
+
     fetchRoomTypes();
   }, []);
 
@@ -101,40 +122,62 @@ export default function BookingPage() {
     return selectedDateTime > now;
   };
 
+  const calculateMinCheckoutDateTime = (checkInDate: string, checkInTime: string): { date: string; time: string } => {
+    const checkInDateTime = new Date(`${checkInDate}T${checkInTime}`);
+    const minCheckoutDateTime = new Date(checkInDateTime.getTime() + (12 * 60 * 60 * 1000)); // Add 12 hours
+    
+    return {
+      date: minCheckoutDateTime.toISOString().split('T')[0],
+      time: minCheckoutDateTime.toTimeString().slice(0, 5)
+    };
+  };
+
   const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newData = { ...prev, [field]: value };
 
       // Reset check-in time if date changes
-      if (field === 'checkInDate') {
-        newData.checkInTime = '14:00';
+      if (field === "checkInDate") {
+        newData.checkInTime = "14:00";
         // Reset checkout date and time if new check-in date is after current checkout date
-        if (newData.checkOutDate && newData.checkOutDate < newData.checkInDate) {
+        if (
+          newData.checkOutDate &&
+          newData.checkOutDate < newData.checkInDate
+        ) {
           newData.checkOutDate = newData.checkInDate;
-          newData.checkOutTime = '11:00';
+          newData.checkOutTime = "11:00";
         }
       }
-      
+
       // For same day booking, ensure checkout time is after check-in time
       if (newData.checkInDate === newData.checkOutDate) {
-        if (field === 'checkInTime' && newData.checkOutTime <= value) {
+        if (field === "checkInTime" && newData.checkOutTime <= value) {
           newData.checkOutTime = addHours(value as string, 1);
+        }
+      }
+
+      // Update checkout date and time when check-in changes
+      if (field === 'checkInDate' || field === 'checkInTime') {
+        if (newData.checkInDate && newData.checkInTime) {
+          const minCheckout = calculateMinCheckoutDateTime(newData.checkInDate, newData.checkInTime);
+          newData.checkOutDate = minCheckout.date;
+          newData.checkOutTime = minCheckout.time;
         }
       }
 
       return newData;
     });
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [field]: undefined
+      [field]: undefined,
     }));
   };
 
   // Helper function to add hours to time string
   const addHours = (time: string, hoursToAdd: number): string => {
-    const [hours, minutes] = time.split(':').map(Number);
+    const [hours, minutes] = time.split(":").map(Number);
     const newHours = (hours + hoursToAdd) % 24;
-    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return `${newHours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
   const getDateTimeFromStrings = (date: string, time: string): Date => {
@@ -143,52 +186,71 @@ export default function BookingPage() {
 
   const validateForm = () => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toISOString().split("T")[0];
     const now = new Date();
-  
+
     // Room type validation
     if (!formData.roomType) {
+      console.log("Room type validation failed");
       newErrors.roomType = "Room type is required";
     }
-  
+
     // Check-in datetime validation
     if (!formData.checkInDate) {
       newErrors.checkInDate = "Check-in date is required";
     } else {
-      const checkInDateTime = getDateTimeFromStrings(formData.checkInDate, formData.checkInTime);
+      const checkInDateTime = getDateTimeFromStrings(
+        formData.checkInDate,
+        formData.checkInTime
+      );
       if (checkInDateTime < now) {
         newErrors.checkInTime = "Check-in date and time cannot be in the past";
       }
     }
-  
+
     // Check-out datetime validation
     if (!formData.checkOutDate) {
       newErrors.checkOutDate = "Check-out date is required";
     } else {
-      const checkInDateTime = getDateTimeFromStrings(formData.checkInDate, formData.checkInTime);
-      const checkOutDateTime = getDateTimeFromStrings(formData.checkOutDate, formData.checkOutTime);
+      const checkInDateTime = getDateTimeFromStrings(
+        formData.checkInDate,
+        formData.checkInTime
+      );
+      const checkOutDateTime = getDateTimeFromStrings(
+        formData.checkOutDate,
+        formData.checkOutTime
+      );
+
+      const minCheckOutDateTime = new Date(checkInDateTime.getTime() + (12 * 60 * 60 * 1000));
       
+      if (checkOutDateTime < minCheckOutDateTime) {
+        newErrors.checkOutTime = "Minimum stay duration is 12 hours";
+      }
+
       // Same day booking validation
       if (formData.checkInDate === formData.checkOutDate) {
         if (formData.checkOutTime <= formData.checkInTime) {
-          newErrors.checkOutTime = "Check-out time must be after check-in time on same day";
+          newErrors.checkOutTime =
+            "Check-out time must be after check-in time on same day";
         }
       } else if (checkOutDateTime <= checkInDateTime) {
-        newErrors.checkOutDate = "Check-out date and time must be after check-in date and time";
+        newErrors.checkOutDate =
+          "Check-out date and time must be after check-in date and time";
       }
     }
-  
+
     // Guest count validation
     if (!formData.guestCount || formData.guestCount < 1) {
       newErrors.guestCount = "At least 1 guest is required";
     }
-  
+
     // Name validation
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
-  
+
     setErrors(newErrors);
+    console.log("Set Errors:", newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -196,16 +258,19 @@ export default function BookingPage() {
     const checkAvailability = async () => {
       if (formData.roomType && formData.checkInDate && formData.checkOutDate) {
         try {
-          const response = await axios.post(`${API_URLS.BACKEND_URL}/api/rooms/availability`, {
-            roomType: formData.roomType,
-            checkInDate: formData.checkInDate,
-            checkInTime: formData.checkInTime,
-            checkOutDate: formData.checkOutDate,
-            checkOutTime: formData.checkOutTime
-          });
+          const response = await axios.post(
+            `${API_URLS.BACKEND_URL}/api/rooms/availability`,
+            {
+              roomType: formData.roomType,
+              checkInDate: formData.checkInDate,
+              checkInTime: formData.checkInTime,
+              checkOutDate: formData.checkOutDate,
+              checkOutTime: formData.checkOutTime,
+            }
+          );
           setAvailability(response.data);
         } catch (error) {
-          console.error('Failed to check availability:', error);
+          console.error("Failed to check availability:", error);
         }
       }
     };
@@ -213,32 +278,45 @@ export default function BookingPage() {
     checkAvailability();
   }, [formData.roomType, formData.checkInDate, formData.checkOutDate]);
 
+  useEffect(() => {
+    console.log("Current Errors:", errors);
+  }, [errors]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Run validation before proceeding
-    const isValid = validateForm();
-    if (!isValid) {
-      // If validation fails, return early
-      return;
-    }
-    
+
+  console.log('SUBMIT TRIGGERED');
+  console.log('Form Data BEFORE Validation:', formData);
+
+  const isValid = validateForm();
+  
+  console.log('Validation Result:', isValid);
+  console.log('Errors After Validation:', JSON.stringify(errors));
+
+  if (!isValid) {
+    setShowErrorModal(true);
+    return;
+  }
+
     if (!availability?.available) {
       return;
     }
-  
+
     setIsLoading(true);
-    setMessage('');
-  
+    setMessage("");
+
     try {
-      const response = await axios.post(`${API_URLS.BACKEND_URL}/api/bookings`, formData);
+      const response = await axios.post(
+        `${API_URLS.BACKEND_URL}/api/bookings`,
+        formData
+      );
       if (response.data) {
-        setMessage('Booking successful!');
+        setMessage("Booking successful!");
         router.push(`/confirmation?id=${response.data.bookingId}`);
       }
     } catch (error) {
-      setMessage('Failed to create booking. Please try again.');
-      console.error('Booking failed:', error);
+      setMessage("Failed to create booking. Please try again.");
+      console.error("Booking failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -260,6 +338,12 @@ export default function BookingPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <ErrorNotification 
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        errors={errors}
+      />
+      
       <h1 className="text-2xl font-bold mb-6 text-center">Book your room</h1>
       {message && (
         <div className="mb-4 p-4 bg-blue-100 text-blue-700 rounded">
@@ -278,27 +362,35 @@ export default function BookingPage() {
             />
 
             <input
-                type="hidden"
-                name="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-              />
+              type="hidden"
+              name="phone"
+              value={formData.phone}
+              onChange={(e) => handleInputChange("phone", e.target.value)}
+            />
 
             <Select
               label="Room Type"
               placeholder="Select room type"
               value={formData.roomType}
               onChange={(e) => handleInputChange("roomType", e.target.value)}
-              errorMessage={errors.roomType}
-              isInvalid={!!errors.roomType} 
               isRequired
               onBlur={() => {
                 if (!formData.roomType) {
-                  setErrors(prev => ({
+                  setErrors((prev) => ({
                     ...prev,
-                    roomType: "Room type is required"
+                    roomType: "Room type is required",
                   }));
                 }
+              }}
+              onSelectionChange={(keys) => {
+                const selectedValue = Array.from(keys)[0] as string;
+                handleInputChange("roomType", selectedValue);
+
+                // Clear room type error when a selection is made
+                setErrors((prev) => ({
+                  ...prev,
+                  roomType: undefined,
+                }));
               }}
             >
               {roomTypes.map((type) => (
@@ -311,22 +403,22 @@ export default function BookingPage() {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="date"
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().split("T")[0]}
                 label="Check-in Date"
                 value={formData.checkInDate}
-                onChange={(e) => handleInputChange("checkInDate", e.target.value)}
-                errorMessage={errors.checkInDate}
-                isInvalid={!!errors.checkInDate}
+                onChange={(e) =>
+                  handleInputChange("checkInDate", e.target.value)
+                }
                 isRequired
               />
               <Input
                 type="time"
                 label="Check-in Time"
                 value={formData.checkInTime}
-                onChange={(e) => handleInputChange("checkInTime", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("checkInTime", e.target.value)
+                }
                 isDisabled={!formData.checkInDate}
-                errorMessage={!isTimeValid(formData.checkInDate, formData.checkInTime) ? "Selected time has already passed" : ""}
-                isInvalid={!isTimeValid(formData.checkInDate, formData.checkInTime)}
                 required
               />
             </div>
@@ -334,12 +426,14 @@ export default function BookingPage() {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="date"
-                min={formData.checkInDate || new Date().toISOString().split('T')[0] }
+                min={
+                  formData.checkInDate || new Date().toISOString().split("T")[0]
+                }
                 label="Check-out Date"
                 value={formData.checkOutDate}
-                onChange={(e) => handleInputChange("checkOutDate", e.target.value)}
-                errorMessage={errors.roomType}
-                isInvalid={!!errors.checkOutDate} 
+                onChange={(e) =>
+                  handleInputChange("checkOutDate", e.target.value)
+                }
                 isDisabled={!formData.checkInDate}
                 isRequired
               />
@@ -347,10 +441,10 @@ export default function BookingPage() {
                 type="time"
                 label="Check-out Time"
                 value={formData.checkOutTime}
-                onChange={(e) => handleInputChange("checkOutTime", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("checkOutTime", e.target.value)
+                }
                 isDisabled={!formData.checkOutDate}
-                errorMessage={errors.checkOutTime}
-                isInvalid={!!errors.checkOutTime}
                 required
               />
             </div>
@@ -360,7 +454,9 @@ export default function BookingPage() {
               label="Number of Guests"
               min="1"
               value={formData.guestCount.toString()}
-              onChange={(e) => handleInputChange("guestCount", parseInt(e.target.value))}
+              onChange={(e) =>
+                handleInputChange("guestCount", parseInt(e.target.value))
+              }
               required
             />
 
@@ -374,20 +470,22 @@ export default function BookingPage() {
             {availability && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Chip 
+                  <Chip
                     color={availability.available ? "success" : "danger"}
                     size="sm"
                     className="font-medium"
                   >
-                    {availability.available 
-                      ? `${availability.remainingRooms} ${availability.remainingRooms === 1 ? 'Room' : 'Rooms'} Available`
+                    {availability.available
+                      ? `${availability.remainingRooms} ${availability.remainingRooms === 1 ? "Room" : "Rooms"} Available`
                       : "Fully Booked"}
                   </Chip>
-                  
+
                   {availability.available && (
                     <div className="text-right">
                       <p className="text-sm text-gray-600">
-                        ${availability.roomPricePerDay.toFixed(2)}/night • {availability.numberOfDays} {availability.numberOfDays === 1 ? 'night' : 'nights'}
+                        ${availability.roomPricePerDay.toFixed(2)}/night •{" "}
+                        {availability.numberOfDays}{" "}
+                        {availability.numberOfDays === 1 ? "night" : "nights"}
                       </p>
                       <p className="text-base font-semibold text-success">
                         Total: ${availability.estimatedTotalPrice.toFixed(2)}
