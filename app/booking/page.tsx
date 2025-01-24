@@ -63,14 +63,14 @@ export default function BookingPage() {
         const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
           params: { token }
         });
-        
+
         // Update form with validated user data
         setFormData(prev => ({
           ...prev,
           name: response.data.name,
           phone: response.data.phone
         }));
-        
+
         setIsLoading(false);
       } catch (error) {
         console.error('Token validation failed:', error);
@@ -94,37 +94,88 @@ export default function BookingPage() {
     fetchRoomTypes();
   }, []);
 
+  const isTimeValid = (date: string, time: string): boolean => {
+    if (!date) return true;
+    const now = new Date();
+    const selectedDateTime = new Date(`${date}T${time}`);
+    return selectedDateTime > now;
+  };
+
   const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+
+      // Reset check-in time if date changes
+      if (field === 'checkInDate') {
+        newData.checkInTime = '14:00';
+        // Reset checkout date and time if new check-in date is after current checkout date
+        if (newData.checkOutDate && newData.checkOutDate < newData.checkInDate) {
+          newData.checkOutDate = newData.checkInDate;
+          newData.checkOutTime = '11:00';
+        }
+      }
+      
+      // For same day booking, ensure checkout time is after check-in time
+      if (newData.checkInDate === newData.checkOutDate) {
+        if (field === 'checkInTime' && newData.checkOutTime <= value) {
+          newData.checkOutTime = addHours(value as string, 1);
+        }
+      }
+
+      return newData;
+    });
     setErrors(prev => ({
       ...prev,
       [field]: undefined
     }));
   };
+
+  // Helper function to add hours to time string
+  const addHours = (time: string, hoursToAdd: number): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newHours = (hours + hoursToAdd) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const getDateTimeFromStrings = (date: string, time: string): Date => {
+    return new Date(`${date}T${time}`);
+  };
+
   const validateForm = () => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
     const currentDate = new Date().toISOString().split('T')[0];
+    const now = new Date();
   
     // Room type validation
     if (!formData.roomType) {
       newErrors.roomType = "Room type is required";
     }
   
-    // Check-in date validation
+    // Check-in datetime validation
     if (!formData.checkInDate) {
       newErrors.checkInDate = "Check-in date is required";
-    } else if (formData.checkInDate < currentDate) {
-      newErrors.checkInDate = "Check-in date cannot be in the past";
+    } else {
+      const checkInDateTime = getDateTimeFromStrings(formData.checkInDate, formData.checkInTime);
+      if (checkInDateTime < now) {
+        newErrors.checkInTime = "Check-in date and time cannot be in the past";
+      }
     }
   
-    // Check-out date validation
+    // Check-out datetime validation
     if (!formData.checkOutDate) {
       newErrors.checkOutDate = "Check-out date is required";
-    } else if (formData.checkOutDate <= formData.checkInDate) {
-      newErrors.checkOutDate = "Check-out date must be after check-in date";
+    } else {
+      const checkInDateTime = getDateTimeFromStrings(formData.checkInDate, formData.checkInTime);
+      const checkOutDateTime = getDateTimeFromStrings(formData.checkOutDate, formData.checkOutTime);
+      
+      // Same day booking validation
+      if (formData.checkInDate === formData.checkOutDate) {
+        if (formData.checkOutTime <= formData.checkInTime) {
+          newErrors.checkOutTime = "Check-out time must be after check-in time on same day";
+        }
+      } else if (checkOutDateTime <= checkInDateTime) {
+        newErrors.checkOutDate = "Check-out date and time must be after check-in date and time";
+      }
     }
   
     // Guest count validation
@@ -241,6 +292,14 @@ export default function BookingPage() {
               errorMessage={errors.roomType}
               isInvalid={!!errors.roomType} 
               isRequired
+              onBlur={() => {
+                if (!formData.roomType) {
+                  setErrors(prev => ({
+                    ...prev,
+                    roomType: "Room type is required"
+                  }));
+                }
+              }}
             >
               {roomTypes.map((type) => (
                 <SelectItem key={type.type} value={type.type}>
@@ -265,6 +324,9 @@ export default function BookingPage() {
                 label="Check-in Time"
                 value={formData.checkInTime}
                 onChange={(e) => handleInputChange("checkInTime", e.target.value)}
+                isDisabled={!formData.checkInDate}
+                errorMessage={!isTimeValid(formData.checkInDate, formData.checkInTime) ? "Selected time has already passed" : ""}
+                isInvalid={!isTimeValid(formData.checkInDate, formData.checkInTime)}
                 required
               />
             </div>
@@ -278,6 +340,7 @@ export default function BookingPage() {
                 onChange={(e) => handleInputChange("checkOutDate", e.target.value)}
                 errorMessage={errors.roomType}
                 isInvalid={!!errors.checkOutDate} 
+                isDisabled={!formData.checkInDate}
                 isRequired
               />
               <Input
@@ -285,6 +348,9 @@ export default function BookingPage() {
                 label="Check-out Time"
                 value={formData.checkOutTime}
                 onChange={(e) => handleInputChange("checkOutTime", e.target.value)}
+                isDisabled={!formData.checkOutDate}
+                errorMessage={errors.checkOutTime}
+                isInvalid={!!errors.checkOutTime}
                 required
               />
             </div>
