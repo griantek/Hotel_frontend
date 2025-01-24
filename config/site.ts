@@ -33,6 +33,10 @@ export const siteConfig = {
       label: "Users",
       href: "/admin/users",
     },
+    {
+      label: "Feedback",
+      href: "/admin/feedbacks",
+    },
   ],
   links: {
     github: "https://github.com/nextui-org/nextui",
