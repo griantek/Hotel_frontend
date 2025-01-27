@@ -1,62 +1,49 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { 
-  Table, 
-  TableHeader, 
-  TableColumn, 
-  TableBody, 
-  TableRow, 
-  TableCell,
-  Card,
-  CardBody,
-  Input,
-  Button,
-  Chip,
-  Select,
-  SelectItem,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Card, CardBody, Input, Button, Chip, Select, SelectItem,
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
 } from "@nextui-org/react";
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
 import moment from 'moment';
 
-// Add helper function to check if date is today
+// Helper function
 const isToday = (dateString: string) => {
-    return moment(dateString).isSame(moment(), 'day');
-  };
+  return moment(dateString).isSame(moment(), 'day');
+};
 
+// Interfaces
 interface Booking {
+  id: number;
+  user: {
     id: number;
-    user: {
-      id: number;
-      name: string;
-      phone: string;
-    };
-    room_type: string;
-    check_in_date: string;
-    check_in_time: string;
-    check_out_date: string;
-    check_out_time: string;
-    guest_count: number;
-    total_price: number;
-    status: string;
-    paid_status: string;
-    notes?: string;
-    checkin_status: string;
-  }
-  
+    name: string;
+    phone: string;
+  };
+  room_type: string;
+  check_in_date: string;
+  check_in_time: string;
+  check_out_date: string;
+  check_out_time: string;
+  guest_count: number;
+  total_price: number;
+  status: string;
+  paid_status: string;
+  notes?: string;
+  checkin_status: string;
+}
 
 export default function BookingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
   
+  // State management
+  const [isClient, setIsClient] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,8 +52,10 @@ export default function BookingsPage() {
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<'all' | 'checkinToday' | 'checkoutToday'>('all');
-  
+
+  // Initial setup and data fetching
   useEffect(() => {
+    setIsClient(true);
     const fetchBookings = async () => {
       try {
         const token = localStorage.getItem('adminToken');
@@ -82,7 +71,6 @@ export default function BookingsPage() {
         });
 
         if (!response.ok) throw new Error('Failed to fetch bookings');
-        
         const data = await response.json();
         setBookings(data);
       } catch (err) {
@@ -95,6 +83,7 @@ export default function BookingsPage() {
     fetchBookings();
   }, [router]);
 
+  // Handlers
   const handleCancelClick = (bookingId: number) => {
     setSelectedBookingId(bookingId);
     setIsModalOpen(true);
@@ -107,9 +96,7 @@ export default function BookingsPage() {
       const token = localStorage.getItem('adminToken');
       await axios.delete(
         `${API_URLS.BACKEND_URL}/api/admin/bookings/${selectedBookingId}`,
-        { 
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       
       setBookings(bookings.filter(booking => booking.id !== selectedBookingId));
@@ -119,41 +106,8 @@ export default function BookingsPage() {
     }
   };
 
-//   const filteredBookings = bookings.filter(booking => {
-//     if (!searchTerm) return statusFilter === 'all' || booking.status === statusFilter;
-
-//     const matchesSearch = 
-//       (booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-//       (booking.user?.phone?.includes(searchTerm) || false) ||
-//       (booking.room_type?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-    
-//     const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-    
-//     // Date filter
-//     let matchesDate = true;
-//     const today = moment().format('YYYY-MM-DD');
-//     if (dateFilter === 'checkinToday') {
-//         const checkInDate = moment(booking.check_in_date).format('YYYY-MM-DD');
-//         matchesDate = checkInDate === today;
-//         console.log('Check-in comparison:', {
-//           checkInDate,
-//           today,
-//           matches: checkInDate === today
-//         });
-//       } else if (dateFilter === 'checkoutToday') {
-//         const checkOutDate = moment(booking.check_out_date).format('YYYY-MM-DD');
-//         matchesDate = checkOutDate === today;
-//         console.log('Check-out comparison:', {
-//           checkOutDate,
-//           today,
-//           matches: checkOutDate === today
-//         });
-//       }
-
-//     return matchesSearch && matchesStatus && matchesDate;
-//   });
-const filteredBookings = bookings.filter(booking => {
-    // Always check all three filters
+  // Filtering logic
+  const filteredBookings = bookings.filter(booking => {
     const matchesSearch = !searchTerm || (
       (booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
       (booking.user?.phone?.includes(searchTerm) || false) ||
@@ -176,11 +130,12 @@ const filteredBookings = bookings.filter(booking => {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
+  // Calculate totals
   const totalRevenue = filteredBookings
     .filter(b => b.status === 'confirmed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
 
-  if (loading) {
+  if (!isClient || loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -216,24 +171,20 @@ const filteredBookings = bookings.filter(booking => {
             </div>
 
             <div className="w-48">
-                <Select 
+              <Select 
                 placeholder="Filter by date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}
-                >
+              >
                 <SelectItem key="all" value="all">All Dates</SelectItem>
                 <SelectItem key="checkinToday" value="checkinToday">Check-in Today</SelectItem>
                 <SelectItem key="checkoutToday" value="checkoutToday">Check-out Today</SelectItem>
-                </Select>
+              </Select>
             </div>
 
             <div className="flex gap-2">
-              <Chip color="success">
-                Total Revenue: ${totalRevenue.toFixed(2)}
-              </Chip>
-              <Chip color="primary">
-                Total Bookings: {filteredBookings.length}
-              </Chip>
+              <Chip color="success">Total Revenue: ${totalRevenue.toFixed(2)}</Chip>
+              <Chip color="primary">Total Bookings: {filteredBookings.length}</Chip>
             </div>
           </div>
 
@@ -287,16 +238,16 @@ const filteredBookings = bookings.filter(booking => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                        color={
+                      color={
                         booking.checkin_status === 'checked in' 
-                            ? 'success' 
-                            : booking.checkin_status === 'checked out'
+                          ? 'success' 
+                          : booking.checkin_status === 'checked out'
                             ? 'secondary'
                             : 'warning'
-                        }
-                        size="sm"
+                      }
+                      size="sm"
                     >
-                        {booking.checkin_status.toUpperCase()}
+                      {booking.checkin_status.toUpperCase()}
                     </Chip>
                   </TableCell>
                   <TableCell>
@@ -311,41 +262,14 @@ const filteredBookings = bookings.filter(booking => {
                       </Button>
                       {booking.status === 'confirmed' && (
                         <Button
-                        size="sm"
-                        color="danger"
-                        variant="flat"
-                        onPress={() => handleCancelClick(booking.id)}
+                          size="sm"
+                          color="danger"
+                          variant="flat"
+                          onPress={() => handleCancelClick(booking.id)}
                         >
-                        Cancel
+                          Cancel
                         </Button>
                       )}
-                      <Modal 
-                        isOpen={isModalOpen} 
-                        onClose={() => setIsModalOpen(false)}
-                    >
-                        <ModalContent>
-                        <ModalHeader>Confirm Cancellation</ModalHeader>
-                        <ModalBody>
-                            Are you sure you want to cancel this booking?
-                            This action cannot be undone.
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button
-                            color="default"
-                            variant="flat"
-                            onPress={() => setIsModalOpen(false)}
-                            >
-                            Close
-                            </Button>
-                            <Button 
-                            color="danger" 
-                            onPress={handleConfirmCancel}
-                            >
-                            Confirm Cancel
-                            </Button>
-                        </ModalFooter>
-                        </ModalContent>
-                    </Modal>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -354,6 +278,34 @@ const filteredBookings = bookings.filter(booking => {
           </Table>
         </CardBody>
       </Card>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+      >
+        <ModalContent>
+          <ModalHeader>Confirm Cancellation</ModalHeader>
+          <ModalBody>
+            Are you sure you want to cancel this booking?
+            This action cannot be undone.
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="default"
+              variant="flat"
+              onPress={() => setIsModalOpen(false)}
+            >
+              Close
+            </Button>
+            <Button 
+              color="danger" 
+              onPress={handleConfirmCancel}
+            >
+              Confirm Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
