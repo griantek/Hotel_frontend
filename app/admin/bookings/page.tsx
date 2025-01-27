@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { 
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Card, CardBody, Input, Button, Chip, Select, SelectItem,
@@ -12,12 +12,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
 import moment from 'moment';
 
-// Helper function
-const isToday = (dateString: string) => {
-  return moment(dateString).isSame(moment(), 'day');
-};
-
-// Interfaces
 interface Booking {
   id: number;
   user: {
@@ -38,11 +32,10 @@ interface Booking {
   checkin_status: string;
 }
 
-export default function BookingsPage() {
+function BookingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // State management
   const [isClient, setIsClient] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +46,6 @@ export default function BookingsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<'all' | 'checkinToday' | 'checkoutToday'>('all');
 
-  // Initial setup and data fetching
   useEffect(() => {
     setIsClient(true);
     const fetchBookings = async () => {
@@ -83,7 +75,6 @@ export default function BookingsPage() {
     fetchBookings();
   }, [router]);
 
-  // Handlers
   const handleCancelClick = (bookingId: number) => {
     setSelectedBookingId(bookingId);
     setIsModalOpen(true);
@@ -106,7 +97,6 @@ export default function BookingsPage() {
     }
   };
 
-  // Filtering logic
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = !searchTerm || (
       (booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
@@ -130,7 +120,6 @@ export default function BookingsPage() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Calculate totals
   const totalRevenue = filteredBookings
     .filter(b => b.status === 'confirmed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
@@ -307,5 +296,19 @@ export default function BookingsPage() {
         </ModalContent>
       </Modal>
     </div>
+  );
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      }
+    >
+      <BookingsContent />
+    </Suspense>
   );
 }
