@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { Card, CardBody, Button, Skeleton } from "@nextui-org/react";
@@ -20,8 +20,7 @@ interface BookingDetails {
   guest_name: string;
   guest_phone: string;
 }
-
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get('id');
   
@@ -140,5 +139,18 @@ export default function ConfirmationPage() {
         </CardBody>
       </Card>
     </div>
+  );
+  
+  
+}
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-md mx-auto p-4">
+        <Skeleton className="h-64 rounded-lg" />
+      </div>
+    }>
+      <ConfirmationContent />
+    </Suspense>
   );
 }
