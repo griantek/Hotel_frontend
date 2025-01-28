@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect , Suspense} from "react";
 import {
   Card,
   CardBody,
@@ -42,7 +42,7 @@ interface Availability {
   numberOfDays: number;
 }
 
-export default function BookingPage() {
+function BookingContent() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -510,5 +510,26 @@ export default function BookingPage() {
         </CardBody>
       </Card>
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="max-w-4xl mx-auto p-6">
+          <Card>
+            <CardBody>
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4" />
+            </CardBody>
+          </Card>
+        </div>
+      }
+    >
+      <BookingContent />
+    </Suspense>
   );
 }

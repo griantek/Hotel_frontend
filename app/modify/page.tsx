@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import {
@@ -56,7 +56,8 @@ interface RoomAvailability {
   numberOfDays: number;
 }
 
-export default function ModifyBooking() {
+
+function ModifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -387,4 +388,26 @@ export default function ModifyBooking() {
 
     </div>
   );
+}
+
+export default function ModifyBooking() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="max-w-4xl mx-auto p-6">
+          <Card>
+            <CardBody>
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-10 w-full mb-4" />
+              <Skeleton className="h-10 w-full" />
+            </CardBody>
+          </Card>
+        </div>
+      }
+    >
+      <ModifyContent />
+    </Suspense>
+  );
+  
 }

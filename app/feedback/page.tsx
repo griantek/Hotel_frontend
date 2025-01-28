@@ -1,12 +1,15 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Card, CardBody, Button, Textarea } from "@nextui-org/react";
+import React, { useState, useEffect,  Suspense } from "react";
+import { Card, CardBody, Button, Textarea ,Skeleton } from "@nextui-org/react";
 import { Star, Send, SmilePlus } from "lucide-react";
 import { button as buttonStyles } from "@nextui-org/theme";
 import { useSearchParams } from "next/navigation";
 import { API_URLS, CHATBOT_NUMBER } from "@/utils/constants";
 
-const FeedbackPage = () => {
+
+
+
+function FeedbackContent() {
   const searchParams = useSearchParams();
   const [rating, setRating] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -185,6 +188,25 @@ const FeedbackPage = () => {
         </div>
       </CardBody>
     </Card>
+  );
+}
+const FeedbackPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-md mx-auto p-4">
+          <Card>
+            <CardBody>
+              <Skeleton className="h-8 w-3/4 mb-4" />
+              <Skeleton className="h-32 w-full mb-4" />
+              <Skeleton className="h-10 w-full" />
+            </CardBody>
+          </Card>
+        </div>
+      }
+    >
+      <FeedbackContent />
+    </Suspense>
   );
 };
 
