@@ -69,34 +69,35 @@ export default function BookingPage() {
 
   useEffect(() => {
     const validateToken = async () => {
-      // if (!token) {
-      //   router.push("/tokenexp"); // Redirect to home if no token
-      //   return;
-      // }
-
+      if (!token) {
+        router.push("/tokenexp");
+        return;
+      }
+  
       try {
-        // Simulate backend response
-        const simulatedResponse = {
-          data: {
-            name: "John Doe",
-            phone: "1234567890",
-          },
-        };
-
-        // Update form with simulated user data
+        const response = await axios.get(
+          `${API_URLS.BACKEND_URL}/api/validate-token`, 
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+  
+        // Update form with actual user data from API
         setFormData((prev) => ({
           ...prev,
-          name: simulatedResponse.data.name,
-          phone: simulatedResponse.data.phone,
+          name: response.data.name,
+          phone: response.data.phone,
         }));
-
+  
         setIsLoading(false);
       } catch (error) {
         console.error("Token validation failed:", error);
-        router.push("/tokenexp"); // Redirect to home on invalid token
+        router.push("/tokenexp");
       }
     };
-
+  
     validateToken();
   }, [token, router]);
 
