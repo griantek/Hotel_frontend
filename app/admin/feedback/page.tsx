@@ -45,7 +45,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const response = await axios.get(`${API_URLS.BACKEND_URL}/api/admin/feedback`, {
+      const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/feedback`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFeedback(response.data);
