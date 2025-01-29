@@ -76,7 +76,7 @@ function BookingContent() {
   
       try {
         const response = await axios.get(
-          `${API_URLS.BACKEND_URL}/api/validate-token`, 
+          `${API_URLS.BACKEND_URL}/validate-token`, 
           {
             headers: {
               Authorization: `Bearer ${token}`
