@@ -74,6 +74,7 @@ function BookingContent() {
       setTokenError('');
       
       if (!token) {
+        console.log("Token not found");
         router.push("/tokenexp");
         return;
       }
