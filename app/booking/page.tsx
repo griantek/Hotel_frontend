@@ -11,6 +11,10 @@ import {
   Chip,
   Divider,
   Skeleton,
+  Modal,
+  ModalContent,
+  ModalBody,
+  useDisclosure,
 } from "@nextui-org/react";
 import Image from "next/image";
 import axios from "axios";
@@ -61,7 +65,8 @@ function BookingContent() {
   const [availability, setAvailability] = useState<Availability | null>(null);
   const searchParams = useSearchParams();
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get("token");
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -130,6 +135,11 @@ function BookingContent() {
     const now = new Date();
     const selectedDateTime = new Date(`${date}T${time}`);
     return selectedDateTime > now;
+  };
+  // Add click handler
+  const handlePhotoClick = (photoUrl: string) => {
+    setSelectedPhoto(`${API_URLS.BACKEND_URL}${photoUrl}`);
+    onOpen();
   };
 
   const calculateMinCheckoutDateTime = (checkInDate: string, checkInTime: string): { date: string; time: string } => {
@@ -415,7 +425,11 @@ function BookingContent() {
               <div className="mt-4">
                 <div className="grid grid-cols-3 gap-4">
                   {selectedRoom.photos.map((photo) => (
-                    <div key={photo.id} className="relative aspect-video">
+                    <div 
+                      key={photo.id} 
+                      className="relative aspect-video cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => handlePhotoClick(photo.photo_url)}
+                    >
                       {!imageErrors[photo.id] && (
                         <img
                           src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
@@ -438,6 +452,25 @@ function BookingContent() {
               </div>
             )}
             </div>
+            <Modal 
+              isOpen={isOpen} 
+              onClose={onClose}
+              size="5xl"
+            >
+              <ModalContent>
+                <ModalBody className="p-0">
+                  {selectedPhoto && (
+                    <div className="relative aspect-video">
+                      <img
+                        src={selectedPhoto}
+                        alt="Enlarged room view"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                </ModalBody>
+              </ModalContent>
+            </Modal>
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="date"
