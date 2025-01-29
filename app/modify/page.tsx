@@ -311,20 +311,28 @@ function ModifyContent() {
               </SelectItem>
             ))}
           </Select>
+          
           {selectedRoom && selectedRoom.photos && selectedRoom.photos.length > 0 && (
             <div className="mt-4">
               <div className="grid grid-cols-3 gap-4">
                 {selectedRoom.photos.map((photo) => (
-                  <div 
+                  <button 
                     key={photo.id} 
-                    className="relative aspect-video cursor-pointer hover:opacity-80 transition-opacity"
+                    className="relative aspect-video cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-lg overflow-hidden"
                     onClick={() => handlePhotoClick(photo.photo_url)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        handlePhotoClick(photo.photo_url);
+                      }
+                    }}
+                    aria-label={`View larger image of ${selectedRoom.type}`}
+                    type="button"
                   >
                     {!imageErrors[photo.id] && (
                       <img
                         src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
-                        alt={selectedRoom.type}
-                        className="rounded-lg object-cover w-full h-full"
+                        alt={`${selectedRoom.type} room view`}
+                        className="w-full h-full object-cover"
                         onError={() => {
                           setImageErrors(prev => ({
                             ...prev,
@@ -333,7 +341,7 @@ function ModifyContent() {
                         }}
                       />
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
               <p className="text-sm text-gray-500 mt-2">
