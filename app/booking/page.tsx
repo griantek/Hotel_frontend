@@ -84,15 +84,7 @@ function BookingContent() {
       while (retryCount < maxRetries) {
         try {
           const response = await axios.get(
-            `${API_URLS.BACKEND_URL}/validate-token`,
-            {
-              params: { token },
-              headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache'
-              },
-              timeout: 5000 // 5 second timeout
-            }
+            `${API_URLS.BACKEND_URL}/validate-token?token=${token}`,
           );
   
           if (response.data) {
