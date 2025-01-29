@@ -45,15 +45,21 @@ export default function FeedbackPage() {
         return;
       }
 
-      const api = axios.create({
-        baseURL: 'https://www.xcelinfotech.com/hotel/api',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-  
-      const response = await api.get('/admin/feedback');
+      // Construct full URL explicitly
+    const fullUrl = 'https://www.xcelinfotech.com/hotel/api/admin/feedback';
+    console.log('Attempting API call to:', fullUrl); // Debug log
+
+    const response = await axios({
+      method: 'get',
+      url: fullUrl,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log('API Response:', response.data); // Debug log
       setFeedback(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to fetch feedback');
