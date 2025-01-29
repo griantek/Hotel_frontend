@@ -74,19 +74,36 @@ function BookingContent() {
       
       if (!token) {
         setTokenError('No token provided');
+        console.log('Token validation failed: No token provided');
         router.push("/tokenexp");
         return;
       }
+
+      const requestConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
+      // Log the request details
+      console.log('Token Validation Request:', {
+        endpoint: `${API_URLS.BACKEND_URL}/validate-token`,
+        method: 'GET',
+        headers: requestConfig.headers,
+        token: `${token.substring(0, 10)}...` // Show first 10 chars for debugging
+      });
   
       try {
         const response = await axios.get(
           `${API_URLS.BACKEND_URL}/validate-token`, 
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
+          requestConfig
         );
+  
+        // Log the response
+        console.log('Token Validation Response:', {
+          status: response.status,
+          data: response.data
+        });
   
         if (!response.data || !response.data.name || !response.data.phone) {
           throw new Error('Invalid response format from server');
