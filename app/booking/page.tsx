@@ -60,8 +60,6 @@ function BookingContent() {
   );
   const [availability, setAvailability] = useState<Availability | null>(null);
   const searchParams = useSearchParams();
-  const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>({});
-
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get("token");
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -112,25 +110,15 @@ function BookingContent() {
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
-        setIsLoading(true);
         const response = await axios.get(
           `${API_URLS.BACKEND_URL}/api/room-types`
         );
         setRoomTypes(response.data);
       } catch (error) {
         console.error("Failed to fetch room types:", error);
-        // Use setMessage instead of setError since you already have message state
-        setMessage("Failed to load room types. Please try again later.");
-        // Or use setErrors if you want to show it in the form validation context
-        setErrors(prev => ({
-          ...prev,
-          roomType: "Failed to load room types. Please try again later."
-        }));
-      } finally {
-        setIsLoading(false);
       }
     };
-  
+
     fetchRoomTypes();
   }, []);
 
@@ -428,19 +416,13 @@ function BookingContent() {
                           alt={selectedRoom.type}
                           className="rounded-lg object-cover"
                           fill
-                          onError={() => {
-                            setImageLoadError(prev => ({
-                              ...prev,
-                              [photo.id]: true
-                            }));
-                          }}
-                          style={{
-                            display: imageLoadError[photo.id] ? 'none' : 'block'
-                          }}
                         />
                       </div>
                     ))}
                   </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Room Price: ${selectedRoom.price}/night
+                  </p>
                 </div>
               )}
             </div>
