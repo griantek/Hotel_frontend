@@ -63,6 +63,7 @@ function ModifyContent() {
   const token = searchParams.get('token');
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [tokenError, setTokenError] = useState<string>("");
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
@@ -83,24 +84,79 @@ function ModifyContent() {
   // Add validation effect
   useEffect(() => {
     const validateToken = async () => {
+      setTokenError(''); // Reset error on new validation attempt
+      
       if (!token) {
-        router.push("/tokenexp"); // Redirect if no token
+        setTokenError('No token provided');
+        console.log('Token validation failed: No token provided');
+        router.push("/tokenexp");
         return;
       }
 
+      const requestConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
+      // Log the request details
+      console.log('Token Validation Request:', {
+        endpoint: `${API_URLS.BACKEND_URL}/validate-token`,
+        method: 'GET',
+        headers: requestConfig.headers,
+        token: `${token.substring(0, 10)}...` // Show first 10 chars for debugging
+      });
+  
       try {
-        const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
-          params: { token }
+        const response = await axios.get(
+          `${API_URLS.BACKEND_URL}/validate-token`, 
+          requestConfig
+        );
+  
+        // Log the response
+        console.log('Token Validation Response:', {
+          status: response.status,
+          data: response.data
         });
-        
+  
+        if (!response.data || !response.data.name || !response.data.phone) {
+          throw new Error('Invalid response format from server');
+        }
+
         // After token validation, fetch booking using the ID from token data
         setBookingId(response.data.id);
-      } catch (error) {
-        console.error('Token validation failed:', error);
-        router.push("/tokenexp"); // Redirect on invalid token
+        setFormData(prev => ({
+          ...prev,
+          name: response.data.name,
+          phone: response.data.phone,
+        }));
+  
+        setIsLoading(false);
+      } catch (error: any) {
+        let errorMessage = 'Token validation failed';
+        
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || 'Unknown error'}`;
+          } else if (error.request) {
+            errorMessage = 'No response from server';
+          } else {
+            errorMessage = `Request error: ${error.message}`;
+          }
+        } else {
+          errorMessage = error.message || 'Unknown error occurred';
+        }
+
+        console.error("Token validation failed:", {
+          error: errorMessage,
+          details: error
+        });
+        
+        setTokenError(errorMessage);
+        router.push(`/tokenexp?error=${encodeURIComponent(errorMessage)}`);
       }
     };
-
+  
     validateToken();
   }, [token, router]);
 
@@ -240,6 +296,21 @@ function ModifyContent() {
             <Skeleton className="h-12 w-full rounded-lg mb-4" />
             <Skeleton className="h-12 w-full rounded-lg mb-4" />
             <Skeleton className="h-12 w-full rounded-lg mb-4" />
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
+  if (tokenError) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Card>
+          <CardBody>
+            <div className="text-red-500">
+              <h2 className="text-lg font-bold">Authentication Error</h2>
+              <p>{tokenError}</p>
+            </div>
           </CardBody>
         </Card>
       </div>
