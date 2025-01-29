@@ -46,11 +46,11 @@ export default function FeedbackPage() {
       }
 
       // Construct full URL explicitly
-      const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/stats`, {
+      //   headers: { Authorization: `Bearer ${token}` }
+      // });
       
-      setFeedback(response.data);
+      // setFeedback(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to fetch feedback');
       if (error.response?.status === 401) {
