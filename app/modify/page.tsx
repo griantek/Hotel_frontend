@@ -18,9 +18,17 @@ import {
   Chip
 } from "@nextui-org/react";
 import { API_URLS } from "@/utils/constants";
+
+interface RoomPhoto {
+  id: number;
+  photo_url: string;
+  is_primary: boolean;
+}
+
 interface RoomType {
   type: string;
   price: number;
+  photos: RoomPhoto[];
 }
 
 interface FormData {
@@ -64,6 +72,8 @@ function ModifyContent() {
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [tokenError, setTokenError] = useState<string>("");
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
@@ -162,6 +172,16 @@ function ModifyContent() {
       ...prev,
       [name]: undefined
     }));
+  };
+  const handleRoomTypeChange = (value: string) => {
+    handleChange({
+      target: {
+        name: 'roomType',
+        value
+      }
+    });
+    const selected = roomTypes.find(r => r.type === value) || null;
+    setSelectedRoom(selected);
   };
 
   const checkAvailability = async () => {
@@ -273,25 +293,41 @@ function ModifyContent() {
             label="Room Type"
             defaultSelectedKeys={[formData.roomType]}
             selectedKeys={[formData.roomType]}
-            onChange={(e) => {
-              handleChange({
-                target: {
-                  name: 'roomType',
-                  value: e.target.value
-                }
-              });
-            }}
+            onChange={(e) => handleRoomTypeChange(e.target.value)}
             isRequired
           >
             {roomTypes.map((room) => (
-              <SelectItem 
-                key={room.type} 
-                value={room.type}
-              >
+              <SelectItem key={room.type} value={room.type}>
                 {room.type}
               </SelectItem>
             ))}
           </Select>
+          {selectedRoom && selectedRoom.photos && selectedRoom.photos.length > 0 && (
+            <div className="mt-4">
+              <div className="grid grid-cols-3 gap-4">
+                {selectedRoom.photos.map((photo) => (
+                  <div key={photo.id} className="relative aspect-video">
+                    {!imageErrors[photo.id] && (
+                      <img
+                        src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
+                        alt={selectedRoom.type}
+                        className="rounded-lg object-cover w-full h-full"
+                        onError={() => {
+                          setImageErrors(prev => ({
+                            ...prev,
+                            [photo.id]: true
+                          }));
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Room Price: ${selectedRoom.price}/night
+              </p>
+            </div>
+          )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
