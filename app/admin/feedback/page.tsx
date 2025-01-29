@@ -45,8 +45,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/feedback`, {
-        baseURL: API_URLS.BACKEND_URL,
+      const response = await axios.get(`https://www.xcelinfotech.com/hotel/api/admin/feedback`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFeedback(response.data);
