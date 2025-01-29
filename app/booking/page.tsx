@@ -54,6 +54,7 @@ function BookingContent() {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get("token");
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [tokenError, setTokenError] = useState<string>("");
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -69,7 +70,10 @@ function BookingContent() {
 
   useEffect(() => {
     const validateToken = async () => {
+      setTokenError(''); // Reset error on new validation attempt
+      
       if (!token) {
+        setTokenError('No token provided');
         router.push("/tokenexp");
         return;
       }
@@ -84,7 +88,10 @@ function BookingContent() {
           }
         );
   
-        // Update form with actual user data from API
+        if (!response.data || !response.data.name || !response.data.phone) {
+          throw new Error('Invalid response format from server');
+        }
+
         setFormData((prev) => ({
           ...prev,
           name: response.data.name,
@@ -92,9 +99,32 @@ function BookingContent() {
         }));
   
         setIsLoading(false);
-      } catch (error) {
-        console.error("Token validation failed:", error);
-        router.push("/tokenexp");
+      } catch (error: any) {
+        let errorMessage = 'Token validation failed';
+        
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            // Server responded with error status
+            errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || 'Unknown error'}`;
+          } else if (error.request) {
+            // Request made but no response
+            errorMessage = 'No response from server';
+          } else {
+            // Request setup error
+            errorMessage = `Request error: ${error.message}`;
+          }
+        } else {
+          // Non-axios error
+          errorMessage = error.message || 'Unknown error occurred';
+        }
+
+        console.error("Token validation failed:", {
+          error: errorMessage,
+          details: error
+        });
+        
+        setTokenError(errorMessage);
+        router.push(`/tokenexp?error=${encodeURIComponent(errorMessage)}`);
       }
     };
   
@@ -331,6 +361,21 @@ function BookingContent() {
             <Skeleton className="h-10 w-full mb-4" />
             <Skeleton className="h-10 w-full mb-4" />
             <Skeleton className="h-10 w-full mb-4" />
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
+  if (tokenError) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Card>
+          <CardBody>
+            <div className="text-red-500">
+              <h2 className="text-lg font-bold">Authentication Error</h2>
+              <p>{tokenError}</p>
+            </div>
           </CardBody>
         </Card>
       </div>
