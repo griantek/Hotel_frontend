@@ -60,6 +60,8 @@ function BookingContent() {
   );
   const [availability, setAvailability] = useState<Availability | null>(null);
   const searchParams = useSearchParams();
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const token = searchParams.get("token");
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -110,15 +112,16 @@ function BookingContent() {
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
-        const response = await axios.get(
-          `${API_URLS.BACKEND_URL}/api/room-types`
-        );
+        console.log('Fetching room types...');
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/api/room-types`);
+        console.log('Room types response:', response.data);
         setRoomTypes(response.data);
       } catch (error) {
         console.error("Failed to fetch room types:", error);
+        setMessage("Failed to load room types. Please try again later.");
       }
     };
-
+  
     fetchRoomTypes();
   }, []);
 
@@ -137,6 +140,11 @@ function BookingContent() {
       date: minCheckoutDateTime.toISOString().split('T')[0],
       time: minCheckoutDateTime.toTimeString().slice(0, 5)
     };
+  };
+  const handleRoomTypeChange = (value: string) => {
+    handleInputChange("roomType", value);
+    const selected = roomTypes.find(r => r.type === value) || null;
+    setSelectedRoom(selected);
   };
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
@@ -391,40 +399,45 @@ function BookingContent() {
             />
             <div className="space-y-4">
             <Select
-                label="Room Type"
-                placeholder="Select room type"
-                value={formData.roomType}
-                onChange={(e) => {
-                  handleInputChange("roomType", e.target.value);
-                  setSelectedRoom(roomTypes.find(r => r.type === e.target.value) || null);
-                }}
-                isRequired
-              >
-                {roomTypes.map((type) => (
-                  <SelectItem key={type.type} value={type.type}>
-                    {type.type}
-                  </SelectItem>
-                ))}
-              </Select>
-              {selectedRoom && selectedRoom.photos && selectedRoom.photos.length > 0 && (
-                <div className="mt-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    {selectedRoom.photos.map((photo) => (
-                      <div key={photo.id} className="relative aspect-video">
+              label="Room Type"
+              placeholder="Select room type"
+              value={formData.roomType}
+              onChange={(e) => handleRoomTypeChange(e.target.value)}
+              isRequired
+            >
+              {roomTypes.map((type) => (
+                <SelectItem key={type.type} value={type.type}>
+                  {type.type}
+                </SelectItem>
+              ))}
+            </Select>
+            {selectedRoom && selectedRoom.photos && selectedRoom.photos.length > 0 && (
+              <div className="mt-4">
+                <div className="grid grid-cols-3 gap-4">
+                  {selectedRoom.photos.map((photo) => (
+                    <div key={photo.id} className="relative aspect-video">
+                      {!imageErrors[photo.id] && (
                         <Image
                           src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
                           alt={selectedRoom.type}
                           className="rounded-lg object-cover"
                           fill
+                          onError={() => {
+                            setImageErrors(prev => ({
+                              ...prev,
+                              [photo.id]: true
+                            }));
+                          }}
                         />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Room Price: ${selectedRoom.price}/night
-                  </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
+                <p className="text-sm text-gray-500 mt-2">
+                  Room Price: ${selectedRoom.price}/night
+                </p>
+              </div>
+            )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Input
