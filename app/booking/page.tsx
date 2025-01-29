@@ -76,14 +76,9 @@ function BookingContent() {
       }
   
       try {
-        const response = await axios.get(
-          `${API_URLS.BACKEND_URL}/api/validate-token`, 
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
+          params: { token }
+        });
   
         // Update form with actual user data from API
         setFormData((prev) => ({
