@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import {
   Table,
   TableHeader,
@@ -18,23 +20,30 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  Chip
+  Chip,
+  Image
 } from "@nextui-org/react";
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
 import { API_URLS } from "@/utils/constants";
+
+interface RoomPhoto {
+  id: number;
+  photo_url: string;
+  is_primary: boolean;
+}
 
 interface Room {
   id: number;
   type: string;
   price: number;
   availability: number;
+  photos: RoomPhoto[];
 }
 
 interface RoomForm {
   type: string;
   price: number;
   availability: number;
+  photos: File[];
 }
 
 export default function RoomsPage() {
@@ -44,16 +53,14 @@ export default function RoomsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [formData, setFormData] = useState<RoomForm>({
     type: '',
     price: 0,
-    availability: 0
+    availability: 0,
+    photos: []
   });
-
-  useEffect(() => {
-    fetchRooms();
-  }, []);
 
   const fetchRooms = async () => {
     try {
@@ -63,17 +70,25 @@ export default function RoomsPage() {
         return;
       }
 
-      const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/rooms`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(
+        `${API_URLS.BACKEND_URL}/admin/rooms`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
       setRooms(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to fetch rooms');
-      if (error.response?.status === 401) {
-        router.push('/admin/login');
-      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
     }
   };
 
@@ -81,17 +96,37 @@ export default function RoomsPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('adminToken');
+      const formDataToSend = new FormData();
+      
+      formDataToSend.append('type', formData.type);
+      formDataToSend.append('price', formData.price.toString());
+      formDataToSend.append('availability', formData.availability.toString());
+      
+      selectedFiles.forEach(file => {
+        formDataToSend.append('photos', file);
+      });
+
       if (editingRoom) {
         await axios.patch(
           `${API_URLS.BACKEND_URL}/admin/rooms/${editingRoom.id}`,
-          formData,
-          { headers: { Authorization: `Bearer ${token}` } }
+          formDataToSend,
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            } 
+          }
         );
       } else {
         await axios.post(
           `${API_URLS.BACKEND_URL}/admin/rooms`,
-          formData,
-          { headers: { Authorization: `Bearer ${token}` } }
+          formDataToSend,
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            } 
+          }
         );
       }
       fetchRooms();
@@ -102,51 +137,42 @@ export default function RoomsPage() {
     }
   };
 
+  const resetForm = () => {
+    setEditingRoom(null);
+    setFormData({ type: '', price: 0, availability: 0, photos: [] });
+    setSelectedFiles([]);
+  };
+
+  if (loading) return <div>Loading...</div>;
+
   const handleEdit = (room: Room) => {
     setEditingRoom(room);
     setFormData({
       type: room.type,
       price: room.price,
-      availability: room.availability
+      availability: room.availability,
+      photos: []
     });
     onOpen();
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this room type?')) return;
+    if (!confirm('Are you sure you want to delete this room?')) return;
     
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`${API_URLS.BACKEND_URL}/admin/rooms/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchRooms();
+      await axios.delete(
+        `${API_URLS.BACKEND_URL}/admin/rooms/${id}`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      await fetchRooms();
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to delete room');
     }
   };
 
-  const resetForm = () => {
-    setEditingRoom(null);
-    setFormData({ type: '', price: 0, availability: 0 });
-  };
-
-  const filteredRooms = rooms.filter(room =>
-    room.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-center">Room Management</h1>
-
       <Card className="mb-6">
         <CardBody>
           <div className="flex justify-between items-center mb-4">
@@ -158,7 +184,7 @@ export default function RoomsPage() {
               />
             </div>
             <Button color="primary" onPress={() => { resetForm(); onOpen(); }}>
-              Add New Room Type
+              Add New Room
             </Button>
           </div>
 
@@ -170,40 +196,40 @@ export default function RoomsPage() {
 
           <Table aria-label="Rooms table">
             <TableHeader>
+              <TableColumn>PHOTOS</TableColumn>
               <TableColumn>TYPE</TableColumn>
               <TableColumn>PRICE</TableColumn>
               <TableColumn>AVAILABILITY</TableColumn>
               <TableColumn>ACTIONS</TableColumn>
             </TableHeader>
             <TableBody>
-              {filteredRooms.map((room) => (
+              {rooms.map((room) => (
                 <TableRow key={room.id}>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {room.photos?.map((photo) => (
+                        <Image
+                          key={photo.id}
+                          src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
+                          alt={room.type}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      ))}
+                    </div>
+                  </TableCell>
                   <TableCell>{room.type}</TableCell>
                   <TableCell>${room.price}</TableCell>
                   <TableCell>
-                    <Chip
-                      color={room.availability > 0 ? "success" : "danger"}
-                      size="sm"
-                    >
+                    <Chip color={room.availability > 0 ? "success" : "danger"} size="sm">
                       {room.availability} rooms
                     </Chip>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        color="primary"
-                        variant="flat"
-                        onPress={() => handleEdit(room)}
-                      >
+                      <Button size="sm" color="primary" onPress={() => handleEdit(room)}>
                         Edit
                       </Button>
-                      <Button
-                        size="sm"
-                        color="danger"
-                        variant="flat"
-                        onPress={() => handleDelete(room.id)}
-                      >
+                      <Button size="sm" color="danger" onPress={() => handleDelete(room.id)}>
                         Delete
                       </Button>
                     </div>
@@ -219,7 +245,7 @@ export default function RoomsPage() {
         <ModalContent>
           <form onSubmit={handleSubmit}>
             <ModalHeader>
-              {editingRoom ? 'Edit Room Type' : 'Add New Room Type'}
+              {editingRoom ? 'Edit Room' : 'Add New Room'}
             </ModalHeader>
             <ModalBody>
               <div className="space-y-4">
@@ -243,6 +269,26 @@ export default function RoomsPage() {
                   onChange={(e) => setFormData({...formData, availability: Number(e.target.value)})}
                   required
                 />
+                <Input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="mt-4"
+                />
+                {selectedFiles.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {Array.from(selectedFiles).map((file, index) => (
+                      <div key={index} className="relative">
+                        <Image
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index}`}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </ModalBody>
             <ModalFooter>
