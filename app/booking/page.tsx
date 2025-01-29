@@ -417,11 +417,10 @@ function BookingContent() {
                   {selectedRoom.photos.map((photo) => (
                     <div key={photo.id} className="relative aspect-video">
                       {!imageErrors[photo.id] && (
-                        <Image
+                        <img
                           src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
                           alt={selectedRoom.type}
-                          className="rounded-lg object-cover"
-                          fill
+                          className="rounded-lg object-cover w-full h-full"
                           onError={() => {
                             setImageErrors(prev => ({
                               ...prev,

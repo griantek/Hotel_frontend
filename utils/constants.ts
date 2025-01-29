@@ -1,5 +1,6 @@
 export const API_URLS = {
     BACKEND_URL: "https://www.xcelinfotech.com/hotel/api", // Backend API base URL
+    IMAGE_BASE_URL: "https://www.xcelinfotech.com"
   };
   
   export const DEFAULT_VALUES = {
