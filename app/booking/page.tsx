@@ -12,14 +12,23 @@ import {
   Divider,
   Skeleton,
 } from "@nextui-org/react";
+import Image from "next/image";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API_URLS } from "@/utils/constants";
 import ErrorNotification from "@/components/ErrorNotification";
 
+interface RoomPhoto {
+  id: number;
+  photo_url: string;
+  is_primary: boolean;
+}
+
 interface RoomType {
+  id: number;
   type: string;
   price: number;
+  photos: RoomPhoto[];
 }
 
 interface FormData {
@@ -55,6 +64,7 @@ function BookingContent() {
   const token = searchParams.get("token");
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [tokenError, setTokenError] = useState<string>("");
+  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -379,39 +389,43 @@ function BookingContent() {
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
             />
-
+            <div className="space-y-4">
             <Select
-              label="Room Type"
-              placeholder="Select room type"
-              value={formData.roomType}
-              onChange={(e) => handleInputChange("roomType", e.target.value)}
-              isRequired
-              onBlur={() => {
-                if (!formData.roomType) {
-                  setErrors((prev) => ({
-                    ...prev,
-                    roomType: "Room type is required",
-                  }));
-                }
-              }}
-              onSelectionChange={(keys) => {
-                const selectedValue = Array.from(keys)[0] as string;
-                handleInputChange("roomType", selectedValue);
-
-                // Clear room type error when a selection is made
-                setErrors((prev) => ({
-                  ...prev,
-                  roomType: undefined,
-                }));
-              }}
-            >
-              {roomTypes.map((type) => (
-                <SelectItem key={type.type} value={type.type}>
-                  {`${type.type}`}
-                </SelectItem>
-              ))}
-            </Select>
-
+                label="Room Type"
+                placeholder="Select room type"
+                value={formData.roomType}
+                onChange={(e) => {
+                  handleInputChange("roomType", e.target.value);
+                  setSelectedRoom(roomTypes.find(r => r.type === e.target.value) || null);
+                }}
+                isRequired
+              >
+                {roomTypes.map((type) => (
+                  <SelectItem key={type.type} value={type.type}>
+                    {type.type}
+                  </SelectItem>
+                ))}
+              </Select>
+              {selectedRoom && selectedRoom.photos && selectedRoom.photos.length > 0 && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {selectedRoom.photos.map((photo) => (
+                      <div key={photo.id} className="relative aspect-video">
+                        <Image
+                          src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
+                          alt={selectedRoom.type}
+                          className="rounded-lg object-cover"
+                          fill
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Room Price: ${selectedRoom.price}/night
+                  </p>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="date"
