@@ -1,5 +1,5 @@
 export const API_URLS = {
-    BACKEND_URL: "http://34.131.92.248:4000", // Backend API base URL
+    BACKEND_URL: "https://www.xcelinfotech.com/hotel/api", // Backend API base URL
   };
   
   export const DEFAULT_VALUES = {

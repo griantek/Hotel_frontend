@@ -84,64 +84,24 @@ function ModifyContent() {
   // Add validation effect
   useEffect(() => {
     const validateToken = async () => {
-      
       if (!token) {
-        router.push("/tokenexp");
+        router.push("/tokenexp"); // Redirect if no token
         return;
       }
-  
-      try {
-        const response = await axios.get(
-          `${API_URLS.BACKEND_URL}/validate-token`,
-          {
-            params: { token },
-          }
-        );
-  
-        // Log the response
-        console.log('Token Validation Response:', {
-          status: response.status,
-          data: response.data
-        });
-  
-        if (!response.data || !response.data.name || !response.data.phone) {
-          throw new Error('Invalid response format from server');
-        }
 
+      try {
+        const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
+          params: { token }
+        });
+        
         // After token validation, fetch booking using the ID from token data
         setBookingId(response.data.id);
-        setFormData(prev => ({
-          ...prev,
-          name: response.data.name,
-          phone: response.data.phone,
-        }));
-  
-        setIsLoading(false);
-      } catch (error: any) {
-        let errorMessage = 'Token validation failed';
-        
-        if (axios.isAxiosError(error)) {
-          if (error.response) {
-            errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || 'Unknown error'}`;
-          } else if (error.request) {
-            errorMessage = 'No response from server';
-          } else {
-            errorMessage = `Request error: ${error.message}`;
-          }
-        } else {
-          errorMessage = error.message || 'Unknown error occurred';
-        }
-
-        console.error("Token validation failed:", {
-          error: errorMessage,
-          details: error
-        });
-        
-        setTokenError(errorMessage);
-        router.push(`/tokenexp?error=${encodeURIComponent(errorMessage)}`);
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        router.push("/tokenexp"); // Redirect on invalid token
       }
     };
-  
+
     validateToken();
   }, [token, router]);
 
