@@ -46,20 +46,10 @@ export default function FeedbackPage() {
       }
 
       // Construct full URL explicitly
-    const fullUrl = 'https://www.xcelinfotech.com/hotel/api/admin/feedback';
-    console.log('Attempting API call to:', fullUrl); // Debug log
-
-    const response = await axios({
-      method: 'get',
-      url: fullUrl,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
-    
-    console.log('API Response:', response.data); // Debug log
+      const response = await axios.get(`${API_URLS.BACKEND_URL}/admin/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
       setFeedback(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error || 'Failed to fetch feedback');
