@@ -79,8 +79,9 @@ function BookingContent() {
   
       try {
         const response = await axios.get(
-          `${API_URLS.BACKEND_URL}/validate-token`,{
-            params: {token: token}
+          `${API_URLS.BACKEND_URL}/validate-token`,
+          {
+            params: { token },
           }
         );
   
