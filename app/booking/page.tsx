@@ -69,67 +69,72 @@ function BookingContent() {
   });
 
   useEffect(() => {
-    const validateToken = async () => {
-      setIsLoading(true);
-      setTokenError('');
-      
-      if (!token) {
-        console.log("Token not found");
-        router.push("/tokenexp");
+    // Replace the existing validateToken function with:
+const validateToken = async () => {
+  setIsLoading(true);
+  setTokenError('');
+  
+  if (!token) {
+    console.log("Token not found");
+    router.push("/tokenexp");
+    return;
+  }
+
+  let retryCount = 0;
+  const maxRetries = 3;
+
+  while (retryCount < maxRetries) {
+    try {
+      const response = await axios.get(`${API_URLS.BACKEND_URL}/validate-token`, {
+        params: { token }, // Pass token as query parameter
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data) {
+        setFormData((prev) => ({
+          ...prev,
+          name: response.data.name,
+          phone: response.data.phone,
+        }));
+        setIsLoading(false);
         return;
       }
-  
-      let retryCount = 0;
-      const maxRetries = 3;
-  
-      while (retryCount < maxRetries) {
-        try {
-          const response = await axios.get(
-            `${API_URLS.BACKEND_URL}/validate-token?token=${token}`,
-          );
-  
-          if (response.data) {
-            setFormData((prev) => ({
-              ...prev,
-              name: response.data.name,
-              phone: response.data.phone,
-            }));
-            setIsLoading(false);
-            return;
+
+    } catch (error: any) {
+      retryCount++;
+      
+      if (retryCount === maxRetries) {
+        let errorMessage = 'Token validation failed';
+        
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || error.response.data?.error || 'Unknown error'}`;
+          } else if (error.request) {
+            errorMessage = 'No response from server';
+          } else {
+            errorMessage = `Request error: ${error.message}`;
           }
-  
-        } catch (error: any) {
-          retryCount++;
-          
-          if (retryCount === maxRetries) {
-            let errorMessage = 'Token validation failed';
-            
-            if (axios.isAxiosError(error)) {
-              if (error.response) {
-                errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || 'Unknown error'}`;
-              } else if (error.request) {
-                errorMessage = 'No response from server';
-              } else {
-                errorMessage = `Request error: ${error.message}`;
-              }
-            }
-  
-            console.error("Token validation failed:", {
-              error: errorMessage,
-              details: error
-            });
-            
-            setTokenError(errorMessage);
-            setIsLoading(false);
-            router.push(`/tokenexp?error=${encodeURIComponent(errorMessage)}`);
-            return;
-          }
-  
-          // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 1000));
         }
+
+        console.error("Token validation failed:", {
+          error: errorMessage,
+          details: error
+        });
+        
+        setTokenError(errorMessage);
+        setIsLoading(false);
+        router.push(`/tokenexp?error=${encodeURIComponent(errorMessage)}`);
+        return;
       }
-    };
+
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+};
   
     validateToken();
   }, [token, router]);
