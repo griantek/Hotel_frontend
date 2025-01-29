@@ -15,7 +15,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Chip
+  Chip,
+  useDisclosure,
 } from "@nextui-org/react";
 import { API_URLS } from "@/utils/constants";
 
@@ -74,6 +75,8 @@ function ModifyContent() {
   const [tokenError, setTokenError] = useState<string>("");
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
@@ -161,6 +164,12 @@ function ModifyContent() {
       fetchBooking();
     }
   }, [bookingId]);
+
+  // Add click handler
+  const handlePhotoClick = (photoUrl: string) => {
+    setSelectedPhoto(`${API_URLS.BACKEND_URL}${photoUrl}`);
+    onOpen();
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
     const { name, value } = e.target;
@@ -306,7 +315,11 @@ function ModifyContent() {
             <div className="mt-4">
               <div className="grid grid-cols-3 gap-4">
                 {selectedRoom.photos.map((photo) => (
-                  <div key={photo.id} className="relative aspect-video">
+                  <div 
+                    key={photo.id} 
+                    className="relative aspect-video cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => handlePhotoClick(photo.photo_url)}
+                  >
                     {!imageErrors[photo.id] && (
                       <img
                         src={`${API_URLS.BACKEND_URL}${photo.photo_url}`}
@@ -328,6 +341,25 @@ function ModifyContent() {
               </p>
             </div>
           )}
+          <Modal 
+            isOpen={isOpen} 
+            onClose={onClose}
+            size="5xl"
+          >
+            <ModalContent>
+              <ModalBody className="p-0">
+                {selectedPhoto && (
+                  <div className="relative aspect-video">
+                    <img
+                      src={selectedPhoto}
+                      alt="Enlarged room view"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+              </ModalBody>
+            </ModalContent>
+          </Modal>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
