@@ -134,7 +134,7 @@ function ConfirmationContent() {
             className="w-full"
             onClick={() => window.location.href = `https://wa.me/${CHATBOT_NUMBER}`}
           >
-            Contact via WhatsApp
+            Done
           </Button>
         </CardBody>
       </Card>

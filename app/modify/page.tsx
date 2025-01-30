@@ -399,7 +399,13 @@ function ModifyContent() {
                 <Input
                   type="date"
                   label="Check-out Date"
-                  min={ formData.checkInDate || new Date().toISOString().split('T')[0]}
+                  min={
+                    formData.checkInDate
+                      ? new Date(new Date(formData.checkInDate).setDate(new Date(formData.checkInDate).getDate() + 1))
+                          .toISOString()
+                          .split('T')[0]
+                      : new Date().toISOString().split('T')[0]
+                  }
                   name="checkOutDate"
                   value={formData.checkOutDate}
                   onChange={handleChange}

@@ -336,7 +336,6 @@ function BookingContent() {
         formData
       );
       if (response.data) {
-        setMessage("Booking successful!");
         router.push(`/confirmation?id=${response.data.bookingId}`);
       }
     } catch (error) {
@@ -500,13 +499,15 @@ function BookingContent() {
               <Input
                 type="date"
                 min={
-                  formData.checkInDate || new Date().toISOString().split("T")[0]
-                }
+                  formData.checkInDate 
+                    ? new Date(new Date(formData.checkInDate).setDate(new Date(formData.checkInDate).getDate() + 1))
+                        .toISOString()
+                        .split("T")[0] 
+                    : new Date().toISOString().split("T")[0]
+                } // Minimum check-out date is the next day of check-in
                 label="Check-out Date"
                 value={formData.checkOutDate}
-                onChange={(e) =>
-                  handleInputChange("checkOutDate", e.target.value)
-                }
+                onChange={(e) => handleInputChange("checkOutDate", e.target.value)}
                 isDisabled={!formData.checkInDate}
                 isRequired
               />
