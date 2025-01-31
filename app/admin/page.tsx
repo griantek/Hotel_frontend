@@ -1,8 +1,11 @@
 'use client';
 
-import { Card, CardBody } from "@nextui-org/react";
+import { Button, Card, CardBody } from "@nextui-org/react";
+import { useRouter } from 'next/navigation';
 
 export default function WelcomePage() {
+  const router = useRouter();
+
   return (
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat"
@@ -19,6 +22,14 @@ export default function WelcomePage() {
           <p className="text-xl mb-8 text-gray-200">
             Experience comfort and luxury at its finest
           </p>
+          <Button 
+            color="primary" 
+            size="lg"
+            onPress={() => router.push('/admin/login')}
+            className="font-semibold"
+          >
+            Admin Login
+          </Button>
         </div>
 
         {/* Features Grid */}
